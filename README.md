@@ -92,7 +92,7 @@ sudo apt install ./build/swimset_1.0.0_all.deb
 swimset
 ```
 
-Or install the prebuilt package from `build/`. The package:
+Build artefacts are not committed; `make deb` writes the package to `build/`. The package:
 
 - installs the app to `/usr/share/swimset`;
 - adds `/usr/bin/swimset` and an application-menu entry with icons;
