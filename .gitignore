@@ -1,0 +1,8 @@
+node_modules/
+dist/
+build/
+*.deb
+.DS_Store
+__pycache__/
+*.pyc
+release/

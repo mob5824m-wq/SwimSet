@@ -1,0 +1,18 @@
+{
+  "name": "swimset",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "SwimSet — a swim practice maker for Debian, Android and Chromebooks",
+  "license": "MIT",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "test": "node --test",
+    "test:ui": "node --test tests/ui.test.js",
+    "icons": "python3 tools/make-icons.py",
+    "deb": "bash packaging/linux/build-deb.sh"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.1"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "id": "./",
+  "name": "SwimSet — Swim Practice Maker",
+  "short_name": "SwimSet",
+  "description": "Build, pace, print and run swim practices. Works offline on Debian, Android and Chromebooks.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#eef5f9",
+  "theme_color": "#062a3a",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["sports", "productivity", "health"],
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New practice",
+      "short_name": "New",
+      "url": "./#/builder",
+      "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Poolside timer",
+      "short_name": "Poolside",
+      "url": "./#/run",
+      "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
