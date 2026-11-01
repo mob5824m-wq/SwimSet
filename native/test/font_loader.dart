@@ -16,13 +16,37 @@ Future<void> loadAppFonts() async {
   }
   await lato.load();
 
-  // Material icons are bundled by the Flutter SDK at build time; tests need the
-  // same font registered under the family Icon widgets ask for.
-  final icons = File('test/assets/MaterialIcons-Regular.ttf');
-  if (icons.existsSync()) {
-    final bytes = icons.readAsBytesSync();
+  final iconFont = _findIconFont();
+  if (iconFont != null) {
+    final bytes = iconFont.readAsBytesSync();
     final loader = FontLoader('MaterialIcons')
       ..addFont(Future<ByteData>.value(ByteData.view(bytes.buffer)));
     await loader.load();
   }
+}
+
+/// The Material icon font lives in the Flutter SDK rather than in this package,
+/// so tests have to find it next to the engine that is running them.
+File? _findIconFont() {
+  const relative = 'bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf';
+  final candidates = <String>[];
+
+  final flutterRoot = Platform.environment['FLUTTER_ROOT'];
+  if (flutterRoot != null && flutterRoot.isNotEmpty) {
+    candidates.add('$flutterRoot/$relative');
+  }
+
+  var dir = File(Platform.resolvedExecutable).parent;
+  for (var depth = 0; depth < 7; depth++) {
+    candidates.add('${dir.path}/$relative');
+    final parent = dir.parent;
+    if (parent.path == dir.path) break;
+    dir = parent;
+  }
+
+  for (final path in candidates) {
+    final file = File(path);
+    if (file.existsSync() && file.lengthSync() > 1000) return file;
+  }
+  return null;
 }
