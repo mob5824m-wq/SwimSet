@@ -2,4 +2,4 @@ Analyzing native...
 
    info • Use the null-aware operator '?.' rather than an explicit 'null' comparison • lib/src/models.dart:190:10 • prefer_null_aware_operators
 
-1 issue found. (ran in 15.5s)
+1 issue found. (ran in 16.1s)

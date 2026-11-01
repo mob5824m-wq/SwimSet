@@ -1,0 +1,41 @@
+
+Running Gradle task 'assembleRelease'...                        
+Warning: The plugin audioplayers_android requires Android SDK version 35 or higher.
+For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
+
+FAILURE: Build completed with 2 failures.
+
+1: Task failed with an exception.
+-----------
+* Where:
+Build file '/home/runner/.pub-cache/hosted/pub.dev/package_info_plus-9.0.1/android/build.gradle' line: 30
+
+* What went wrong:
+A problem occurred evaluating project ':package_info_plus'.
+> Could not get unknown property 'flutter' for extension 'android' of type com.android.build.gradle.LibraryExtension.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* What went wrong:
+A problem occurred configuring project ':package_info_plus'.
+> Failed to notify project evaluation listener.
+   > Cannot invoke method substring() on null object
+   > compileSdkVersion is not specified. Please add it to build.gradle
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+BUILD FAILED in 1m 56s
+Running Gradle task 'assembleRelease'...                          118.0s
+Gradle task assembleRelease failed with exit code 1
