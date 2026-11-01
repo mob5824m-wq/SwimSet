@@ -12,12 +12,17 @@
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: totals and steps validates
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: serialisation round-trips JSON
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: serialisation clamps bad input
+✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: saves, lists and deletes practices
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: conversions converts between courses
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: conversions builds a ladder
+✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: stores the working draft and theme
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: templates and text ships seven templates
+✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: exports and imports the library
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: templates and text exports readable text
+✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: imports a single practice and a bare list
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: heats each heat swims off its own pace
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: heats totals and steps follow the heat
+✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: rejects files without practices
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: heats start offsets stagger the heats
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: heats heats survive JSON and text export
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: heats sparse heats are normalized
@@ -25,50 +30,17 @@
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: blocks and heat overrides blocks expand into steps and totals
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: blocks and heat overrides per-heat send-off overrides win over the heat pace
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: blocks and heat overrides explicit heat offsets win over the interval
-✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: saves, lists and deletes practices
-✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: stores the working draft and theme
-✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: exports and imports the library
-✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: imports a single practice and a bare list
-✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: rejects files without practices
 ::group::✅ /home/runner/work/SwimSet/SwimSet/native/test/widget_test.dart: builder, navigation and saving work
 [fonts] MaterialIcons <- /opt/hostedtoolcache/flutter/stable-3.24.5-x64/flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf
 ::endgroup::
 ::group::✅ /home/runner/work/SwimSet/SwimSet/native/test/widget_test.dart: saved practice opens from the library
 [fonts] MaterialIcons <- /opt/hostedtoolcache/flutter/stable-3.24.5-x64/flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf
 ::endgroup::
-::group::❌ /home/runner/work/SwimSet/SwimSet/native/test/widget_test.dart: poolside timer asks the platform for a background service (failed)
+::group::✅ /home/runner/work/SwimSet/SwimSet/native/test/widget_test.dart: poolside timer asks the platform for a background service
 [fonts] MaterialIcons <- /opt/hostedtoolcache/flutter/stable-3.24.5-x64/flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf
-══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
-The following assertion was thrown running a test:
-The finder "Found 2 widgets with text "Poolside": [
-  Text("Poolside", inherit: true, color: Color(0xff57717e), size: 13.5, weight: 600, dependencies:
-[DefaultSelectionStyle, DefaultTextStyle, MediaQuery]),
-  Text("Poolside", dependencies: [DefaultSelectionStyle, DefaultTextStyle, MediaQuery]),
-]" (used in a call to "tap()") ambiguously found multiple matching widgets. The "tap()" method needs
-a single target.
-
-When the exception was thrown, this was the stack:
-#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1895:7)
-#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1792:12)
-#2      WidgetController.tap (package:flutter_test/src/controller.dart:1040:18)
-#3      main.<anonymous closure> (file:///home/runner/work/SwimSet/SwimSet/native/test/widget_test.dart:119:18)
-<asynchronous suspension>
-#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
-<asynchronous suspension>
-#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1032:5)
-<asynchronous suspension>
-<asynchronous suspension>
-(elided one frame from package:stack_trace)
-
-The test description was:
-  poolside timer asks the platform for a background service
-════════════════════════════════════════════════════════════════════════════════════════════════════
-Test failed. See exception logs above.
-The test description was: poolside timer asks the platform for a background service
-
 ::endgroup::
 ::group::✅ /home/runner/work/SwimSet/SwimSet/native/test/widget_test.dart: a block shows its rounds in the builder
 [fonts] MaterialIcons <- /opt/hostedtoolcache/flutter/stable-3.24.5-x64/flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf
 ::endgroup::
 
-::error::34 tests passed, 1 failed.
+🎉 35 tests passed.
