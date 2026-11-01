@@ -23,6 +23,10 @@ network calls.
 | --- | --- | --- |
 | ![Pace and send-off tools](docs/screenshots/pace.png) | ![Practice library](docs/screenshots/library.png) | ![Phone builder](docs/screenshots/mobile-builder.png) |
 
+| Heats in the builder | Multi-heat poolside clock | Heats on a phone |
+| --- | --- | --- |
+| ![Heats with per-heat paces](docs/screenshots/builder-heats.png) | ![Poolside heat strip and staggered starts](docs/screenshots/poolside-heats.png) | ![Mobile heats](docs/screenshots/mobile-heats.png) |
+
 Screenshots are rendered from the real Flutter widget tree by the CI screenshot test
 (`make screens`), at desktop and phone sizes.
 
