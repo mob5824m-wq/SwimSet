@@ -180,6 +180,13 @@ The original offline-first PWA is still in the repository (`index.html`, `js/`,
 visual design. It is not what ships: `make serve` runs it, `make test` runs its
 logic tests, and the native app reimplements it in Dart.
 
+## Roadmap
+
+Thirty ideas for where SwimSet goes next — set blocks, lane assignments, a split
+timer, voice callouts, background timing, roster and attendance, race-day sheets,
+and notes on APK signing and the download warnings — live in
+[docs/feature-ideas.md](docs/feature-ideas.md).
+
 ## Credits and licence
 
 MIT licensed (see `LICENSE`). Bundled typeface: [Lato](https://www.lato-fonts.com/),
