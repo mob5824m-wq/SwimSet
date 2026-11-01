@@ -335,6 +335,10 @@ class _PracticeCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   TinyPill(practice.course.code),
+                  if (practice.heats.isNotEmpty) ...[
+                    const SizedBox(width: 4),
+                    TinyPill('${practice.heats.length} heats'),
+                  ],
                 ],
               ),
               const SizedBox(height: 3),

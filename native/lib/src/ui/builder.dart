@@ -212,6 +212,8 @@ class _BuilderPageState extends State<BuilderPage> {
           const SizedBox(height: 14),
           _metaCard(context, compact),
           const SizedBox(height: 14),
+          _heatsCard(context, compact),
+          const SizedBox(height: 14),
           if (!wide) ...[
             _totalsCard(context, totals, compact),
             const SizedBox(height: 14),
@@ -505,6 +507,164 @@ class _BuilderPageState extends State<BuilderPage> {
     );
   }
 
+  void _addHeat() {
+    widget.state.updateDraft((practice) {
+      if (practice.heats.length >= 8) return;
+      practice.heats.add(Heat(
+        id: uid('h'),
+        name: 'Heat ${practice.heats.length + 1}',
+      ));
+      if (practice.heats.length > 1 && practice.heatInterval <= 0) {
+        practice.heatInterval = 60;
+      }
+    });
+  }
+
+  void _removeHeat(Heat heat) {
+    widget.state.updateDraft((practice) {
+      practice.heats.removeWhere((item) => item.id == heat.id);
+      if (practice.heats.length < 2) practice.heatInterval = 0;
+    });
+  }
+
+  void _updateHeat(String heatId, void Function(Heat heat) change) {
+    widget.state.updateDraft((practice) {
+      for (final heat in practice.heats) {
+        if (heat.id == heatId) change(heat);
+      }
+    });
+  }
+
+  Widget _heatsCard(BuildContext context, bool compact) {
+    final scheme = Theme.of(context).colorScheme;
+    final practice = _practice;
+    final heats = practice.heats;
+    final unit = practice.course.unit;
+
+    final header = Row(
+      children: [
+        Icon(Icons.groups_2_outlined, size: 18, color: scheme.primary),
+        const SizedBox(width: 8),
+        Text('Heats', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(width: 8),
+        if (heats.isNotEmpty) TinyPill('${heats.length} heats'),
+        const Spacer(),
+        if (heats.isEmpty)
+          OutlinedButton.icon(
+            onPressed: _addHeat,
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('Add heats'),
+            style: OutlinedButton.styleFrom(visualDensity: VisualDensity.compact),
+          ),
+      ],
+    );
+
+    final explain = Text(
+      heats.isEmpty
+          ? 'One group swims every set off the base pace above. Add heats when lanes swim at different paces or need staggered starts.'
+          : 'Each heat gets its own send-offs. A start interval staggers the send-offs in the poolside timer.',
+      style: TextStyle(fontSize: 12, height: 1.35, color: SwimTheme.muted(context)),
+    );
+
+    if (heats.isEmpty) {
+      return SectionCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [header, const SizedBox(height: 6), explain],
+        ),
+      );
+    }
+
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          header,
+          const SizedBox(height: 6),
+          explain,
+          const SizedBox(height: 12),
+          for (var index = 0; index < heats.length; index++) ...[
+            _heatRow(context, heats[index], practice, unit, compact),
+            const SizedBox(height: 8),
+          ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              OutlinedButton.icon(
+                onPressed: heats.length < 8 ? _addHeat : null,
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Add heat'),
+                style: OutlinedButton.styleFrom(visualDensity: VisualDensity.compact),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: LabeledField(
+                  label: 'Start next heat every',
+                  child: NumberField(
+                    value: practice.heatInterval,
+                    min: 0,
+                    max: 1800,
+                    suffix: 'sec',
+                    onChanged: (value) =>
+                        widget.state.updateDraft((draft) => draft.heatInterval = value),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (practice.heatInterval <= 0 && heats.length > 1) ...[
+            const SizedBox(height: 6),
+            Text(
+              'At 0 seconds all heats start together.',
+              style: TextStyle(fontSize: 11, color: SwimTheme.muted(context)),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _heatRow(BuildContext context, Heat heat, Practice practice, String unit, bool compact) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(10, compact ? 6 : 8, 6, compact ? 6 : 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: SwimTheme.line(context)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: 3,
+            child: TextFormField(
+              key: ValueKey('heat-name-${heat.id}'),
+              initialValue: heat.name,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(hintText: 'Heat 1', isDense: true),
+              onChanged: (value) => _updateHeat(heat.id, (item) => item.name = value),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: compact ? 104 : 128,
+            child: TimeField(
+              key: ValueKey('heat-pace-${heat.id}'),
+              seconds: heat.basePace,
+              allowEmpty: true,
+              hint: formatClock(practice.basePace),
+              onChanged: (value) => _updateHeat(heat.id, (item) => item.basePace = value),
+            ),
+          ),
+          IconAction(
+            icon: Icons.delete_outline,
+            tooltip: 'Remove heat',
+            onPressed: () => _removeHeat(heat),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _totalsCard(BuildContext context, Totals totals, bool compact) {
     final scheme = Theme.of(context).colorScheme;
     final draft = _practice;
@@ -573,6 +733,29 @@ class _BuilderPageState extends State<BuilderPage> {
                 ),
               ),
             ],
+          ],
+          if (draft.heats.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            for (final heat in draft.heats)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    Icon(Icons.groups_2_outlined, size: 14, color: SwimTheme.muted(context)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(heat.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    ),
+                    Text(
+                      '~${formatDuration(practiceTotals(draft, heat: heat).seconds)}',
+                      style: TextStyle(fontSize: 12, color: SwimTheme.muted(context)),
+                    ),
+                  ],
+                ),
+              ),
           ],
           const SizedBox(height: 12),
           FilledButton.icon(
@@ -733,6 +916,10 @@ class _SetEditorCardState extends State<SetEditorCard> {
     final set = _set;
     final sendOff = sendOffForSet(set, widget.state.draft);
     final perRep = swimPerRep(set, widget.state.draft);
+    final heatSends = widget.state.draft.heats.map((heat) {
+      final heatSend = sendOffForSet(set, widget.state.draft, heat: heat);
+      return '${heat.name} ${heatSend == null ? 'swim' : formatClock(heatSend)}';
+    }).toList();
     final typeColor = Color(set.type.color);
 
     return Card(
@@ -1007,6 +1194,14 @@ class _SetEditorCardState extends State<SetEditorCard> {
                             hint: '1:30',
                             onChanged: (value) => _update((item) => item.interval = value),
                           ),
+                        ),
+                      ],
+                      if (heatSends.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [for (final label in heatSends) TinyPill(label)],
                         ),
                       ],
                       const SizedBox(height: 6),

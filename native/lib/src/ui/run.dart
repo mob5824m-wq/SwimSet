@@ -37,6 +37,13 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
   final Set<int> _beeps = {};
   late int _seenToken;
 
+  /// One plan per heat when the practice defines several heats.
+  List<_HeatPlan> _plans = const [];
+  int _selectedHeat = 0;
+  bool _notStarted = false;
+
+  bool get _multiHeat => _plans.length > 1;
+
   @override
   void initState() {
     super.initState();
@@ -77,8 +84,29 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
 
   void _loadSteps({bool notify = true}) {
     _ticker?.cancel();
-    _steps = compileSteps(widget.state.draft);
+    final practice = widget.state.draft;
+    if (practice.heats.length > 1) {
+      _plans = [
+        for (var index = 0; index < practice.heats.length; index++)
+          _HeatPlan(
+            heat: practice.heats[index],
+            steps: compileSteps(practice, heat: practice.heats[index]),
+            offsetMs: heatStartOffset(practice, index) * 1000,
+            durationMs: heatDurationMs(practice, practice.heats[index]),
+          ),
+      ];
+      if (_selectedHeat >= _plans.length) _selectedHeat = 0;
+      _steps = _plans[_selectedHeat].steps;
+    } else {
+      _plans = const [];
+      _selectedHeat = 0;
+      _steps = compileSteps(
+        practice,
+        heat: practice.heats.isEmpty ? null : practice.heats.first,
+      );
+    }
     _index = 0;
+    _notStarted = false;
     _remainingMs = _steps.isEmpty ? 0 : _steps.first.durationMs.toDouble();
     _elapsedMs = 0;
     _running = false;
@@ -109,6 +137,11 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
     final delta = now.difference(_lastTick).inMilliseconds.toDouble();
     _lastTick = now;
     if (delta <= 0) return;
+
+    if (_multiHeat) {
+      _tickHeats(delta);
+      return;
+    }
 
     final previous = _remainingMs;
     var remaining = _remainingMs - delta;
@@ -154,6 +187,109 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
       _remainingMs = remaining;
       _elapsedMs = elapsed;
     });
+  }
+
+  void _tickHeats(double delta) {
+    final previousElapsed = _elapsedMs;
+    final elapsed = _elapsedMs + delta.round();
+    _elapsedMs = elapsed;
+
+    // A send cue when another heat goes off the wall.
+    for (var index = 1; index < _plans.length; index++) {
+      final at = _plans[index].offsetMs;
+      if (at > 0 && previousElapsed < at && elapsed >= at) _beep();
+    }
+
+    final plan = _plans[_selectedHeat];
+    final position = _positionAt(plan, elapsed - plan.offsetMs);
+    final previousIndex = _index;
+    final previousRemaining = _remainingMs;
+
+    _steps = plan.steps;
+    _index = position.index;
+    _remainingMs = position.remainingMs;
+    _notStarted = position.notStarted;
+
+    if (position.index != previousIndex) {
+      _beeps.clear();
+      if (!position.notStarted && position.index > 0) _beep();
+    }
+    if (!position.notStarted && !position.finished) {
+      _checkBeeps(previousRemaining, position.remainingMs);
+    }
+
+    if (_plans.every((item) => elapsed >= item.offsetMs + item.durationMs)) {
+      _ticker?.cancel();
+      _keepAwake(false);
+      setState(() {
+        _elapsedMs = elapsed;
+        _running = false;
+        _finished = true;
+        _index = math.max(0, _steps.length - 1);
+        _remainingMs = 0;
+        _notStarted = false;
+      });
+      _showFinished();
+      return;
+    }
+
+    setState(() {});
+  }
+
+  /// Where a heat is on its own timeline, given the shared clock.
+  _HeatPosition _positionAt(_HeatPlan plan, int localMs) {
+    if (localMs < 0) {
+      return _HeatPosition(
+        index: 0,
+        remainingMs: (-localMs).toDouble(),
+        notStarted: true,
+        finished: false,
+      );
+    }
+    var cursor = 0;
+    for (var index = 0; index < plan.steps.length; index++) {
+      final duration = plan.steps[index].durationMs;
+      if (localMs < cursor + duration) {
+        return _HeatPosition(
+          index: index,
+          remainingMs: (cursor + duration - localMs).toDouble(),
+          notStarted: false,
+          finished: false,
+        );
+      }
+      cursor += duration;
+    }
+    return _HeatPosition(
+      index: math.max(0, plan.steps.length - 1),
+      remainingMs: 0,
+      notStarted: false,
+      finished: true,
+    );
+  }
+
+  String _nextSendLine() {
+    for (final plan in _plans) {
+      if (_elapsedMs < plan.offsetMs) {
+        final seconds = ((plan.offsetMs - _elapsedMs) / 1000).ceil();
+        return 'Next send: ${plan.heat.name} in ${formatClock(seconds)}';
+      }
+    }
+    return 'All heats are in the water.';
+  }
+
+  void _selectHeat(int index) {
+    if (!_multiHeat || index < 0 || index >= _plans.length || index == _selectedHeat) return;
+    setState(() {
+      _selectedHeat = index;
+      final plan = _plans[index];
+      final position = _positionAt(plan, _elapsedMs - plan.offsetMs);
+      _steps = plan.steps;
+      _index = position.index;
+      _remainingMs = position.remainingMs;
+      _notStarted = position.notStarted;
+      _beeps.clear();
+    });
+    _scrollToCurrent();
   }
 
   void _checkBeeps(double previous, double remaining) {
@@ -211,12 +347,23 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
     _ticker?.cancel();
     _keepAwake(false);
     setState(() {
-      _index = 0;
-      _remainingMs = _steps.isEmpty ? 0 : _steps.first.durationMs.toDouble();
       _elapsedMs = 0;
       _running = false;
       _finished = false;
       _beeps.clear();
+      if (_multiHeat) {
+        final plan = _plans[_selectedHeat];
+        _steps = plan.steps;
+        _index = 0;
+        _notStarted = plan.offsetMs > 0;
+        _remainingMs = _steps.isEmpty
+            ? 0
+            : (plan.offsetMs > 0 ? plan.offsetMs.toDouble() : _steps.first.durationMs.toDouble());
+      } else {
+        _index = 0;
+        _notStarted = false;
+        _remainingMs = _steps.isEmpty ? 0 : _steps.first.durationMs.toDouble();
+      }
     });
     _scrollToCurrent();
   }
@@ -226,10 +373,20 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
     _ticker?.cancel();
     setState(() {
       _index = index;
+      _notStarted = false;
       _remainingMs = _steps[index].durationMs.toDouble();
       _running = false;
       _finished = false;
       _beeps.clear();
+      if (_multiHeat) {
+        final plan = _plans[_selectedHeat];
+        var local = 0;
+        for (var step = 0; step < index; step++) {
+          local += plan.steps[step].durationMs;
+        }
+        _steps = plan.steps;
+        _elapsedMs = plan.offsetMs + local;
+      }
     });
     _scrollToCurrent();
   }
@@ -275,6 +432,73 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
     } catch (_) {}
   }
 
+  Widget _heatStrip(BuildContext context, ColorScheme scheme) {
+    return ListView.separated(
+      scrollDirection: Axis.horizontal,
+      itemCount: _plans.length,
+      separatorBuilder: (context, index) => const SizedBox(width: 8),
+      itemBuilder: (context, index) {
+        final plan = _plans[index];
+        final position = _positionAt(plan, _elapsedMs - plan.offsetMs);
+        final selected = index == _selectedHeat;
+        final seconds = (position.remainingMs / 1000).ceil();
+        final sending = position.notStarted && seconds <= 5;
+        final String status;
+        if (position.notStarted) {
+          status = sending ? 'send now' : 'in ${formatClock(seconds)}';
+        } else if (position.finished) {
+          status = 'done';
+        } else {
+          status = '${formatClock(seconds)} left';
+        }
+        return InkWell(
+          onTap: () => _selectHeat(index),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: selected ? scheme.primary.withOpacity(0.10) : null,
+              border: Border.all(
+                color: sending
+                    ? const Color(0xFFD97706)
+                    : selected
+                        ? scheme.primary.withOpacity(0.45)
+                        : SwimTheme.line(context),
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  plan.heat.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: selected ? scheme.primary : scheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  status,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: sending ? FontWeight.w700 : FontWeight.w500,
+                    color: sending ? const Color(0xFFD97706) : SwimTheme.muted(context),
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final practice = widget.state.draft;
@@ -293,8 +517,13 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
 
     final step = _steps[_index];
     final scheme = Theme.of(context).colorScheme;
-    final progress = step.durationMs <= 0 ? 0.0 : (_remainingMs / step.durationMs).clamp(0.0, 1.0);
-    final timeUp = !_running && _remainingMs <= 0 && !_finished;
+    final plan = _multiHeat ? _plans[_selectedHeat] : null;
+    final progress = _notStarted
+        ? (plan != null && plan.offsetMs > 0
+            ? (1 - (_remainingMs / plan.offsetMs)).clamp(0.0, 1.0)
+            : 1.0)
+        : (step.durationMs <= 0 ? 0.0 : (_remainingMs / step.durationMs).clamp(0.0, 1.0));
+    final timeUp = !_running && !_notStarted && _remainingMs <= 0 && !_finished;
     final accent = timeUp ? scheme.error : scheme.primary;
     final ringSize = math.min(MediaQuery.sizeOf(context).width - 110, 310.0).toDouble();
 
@@ -314,6 +543,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       TypePill(step.type),
+                      if (plan != null) TinyPill(plan.heat.name),
                       TinyPill('Set ${step.setIndex + 1} of ${practice.sets.length}'),
                       TinyPill('Rep ${step.rep} of ${step.reps}'),
                     ],
@@ -331,6 +561,11 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
                 ),
               ],
             ),
+            if (_multiHeat) ...[
+              const SizedBox(height: 8),
+              SizedBox(height: 52, child: _heatStrip(context, scheme)),
+              const SizedBox(height: 4),
+            ],
             const SizedBox(height: 10),
             Text(
               step.label,
@@ -376,11 +611,13 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            timeUp
-                                ? 'TIME UP'
-                                : step.sendOff != null
-                                    ? 'ON THE SEND-OFF'
-                                    : 'SWIM THIS REP',
+                            _notStarted
+                                ? 'STARTS IN'
+                                : timeUp
+                                    ? 'TIME UP'
+                                    : step.sendOff != null
+                                        ? 'ON THE SEND-OFF'
+                                        : 'SWIM THIS REP',
                             style: TextStyle(
                               fontSize: 10,
                               letterSpacing: 1.6,
@@ -430,11 +667,12 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
                   tooltip: 'Reset practice',
                   icon: const Icon(Icons.replay_rounded, size: 20),
                 ),
-                IconButton.filledTonal(
-                  onPressed: _index > 0 ? () => _jumpTo(_index - 1) : null,
-                  tooltip: 'Previous rep',
-                  icon: const Icon(Icons.skip_previous_rounded, size: 22),
-                ),
+                if (!_multiHeat)
+                  IconButton.filledTonal(
+                    onPressed: _index > 0 ? () => _jumpTo(_index - 1) : null,
+                    tooltip: 'Previous rep',
+                    icon: const Icon(Icons.skip_previous_rounded, size: 22),
+                  ),
                 FilledButton.icon(
                   onPressed: _finished ? () {
                     _reset();
@@ -454,14 +692,29 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
                     textStyle: const TextStyle(fontFamily: 'Lato', fontSize: 17, fontWeight: FontWeight.w700),
                   ),
                 ),
-                IconButton.filledTonal(
-                  onPressed: _index < _steps.length - 1 ? () => _jumpTo(_index + 1) : null,
-                  tooltip: 'Next rep',
-                  icon: const Icon(Icons.skip_next_rounded, size: 22),
-                ),
+                if (!_multiHeat)
+                  IconButton.filledTonal(
+                    onPressed: _index < _steps.length - 1 ? () => _jumpTo(_index + 1) : null,
+                    tooltip: 'Next rep',
+                    icon: const Icon(Icons.skip_next_rounded, size: 22),
+                  ),
               ],
             ),
             const SizedBox(height: 10),
+            if (_multiHeat)
+              Row(
+                children: [
+                  Icon(Icons.sync_rounded, size: 16, color: SwimTheme.muted(context)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'One clock runs every heat. Tap a heat to watch its countdown.',
+                      style: TextStyle(fontSize: 11, color: SwimTheme.muted(context)),
+                    ),
+                  ),
+                ],
+              ),
+            if (!_multiHeat)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -492,9 +745,11 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
             ),
             const SizedBox(height: 6),
             Text(
-              _index == _steps.length - 1
-                  ? 'Last rep — finish strong.'
-                  : 'Up next: ${_steps[_index + 1].label} · rep ${_steps[_index + 1].rep}/${_steps[_index + 1].reps}',
+              _multiHeat
+                  ? _nextSendLine()
+                  : _index == _steps.length - 1
+                      ? 'Last rep — finish strong.'
+                      : 'Up next: ${_steps[_index + 1].label} · rep ${_steps[_index + 1].rep}/${_steps[_index + 1].reps}',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 11.5, color: SwimTheme.muted(context)),
             ),
@@ -513,7 +768,14 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
               children: [
                 Icon(Icons.format_list_numbered, size: 18, color: scheme.primary),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Practice plan', style: Theme.of(context).textTheme.titleMedium)),
+                Expanded(
+                  child: Text(
+                    plan == null ? 'Practice plan' : 'Plan · ${plan.heat.name}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
                 Text('${practice.sets.length} sets',
                     style: TextStyle(fontSize: 11.5, color: SwimTheme.muted(context))),
               ],
@@ -631,4 +893,32 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
       );
     });
   }
+}
+
+class _HeatPlan {
+  _HeatPlan({
+    required this.heat,
+    required this.steps,
+    required this.offsetMs,
+    required this.durationMs,
+  });
+
+  final Heat heat;
+  final List<RunStep> steps;
+  final int offsetMs;
+  final int durationMs;
+}
+
+class _HeatPosition {
+  _HeatPosition({
+    required this.index,
+    required this.remainingMs,
+    required this.notStarted,
+    required this.finished,
+  });
+
+  final int index;
+  final double remainingMs;
+  final bool notStarted;
+  final bool finished;
 }

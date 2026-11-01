@@ -142,6 +142,17 @@ Future<Uint8List> buildPracticePdf(Practice practice) async {
                       style: pw.TextStyle(
                           fontSize: 7.5, color: PdfColors.grey600, fontStyle: pw.FontStyle.italic)),
                 ),
+              if (practice.heats.isNotEmpty)
+                pw.Padding(
+                  padding: const pw.EdgeInsets.only(top: 2),
+                  child: pw.Text(
+                    practice.heats.map((heat) {
+                      final heatSend = sendOffForSet(set, practice, heat: heat);
+                      return '${heat.name} ${heatSend == null ? 'swim' : formatClock(heatSend)}';
+                    }).join('  ·  '),
+                    style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey700),
+                  ),
+                ),
             ],
           ),
         ),
@@ -204,7 +215,43 @@ Future<Uint8List> buildPracticePdf(Practice practice) async {
         ),
         pw.SizedBox(height: 10),
         pw.Divider(color: PdfColors.grey800, thickness: 1.2),
-        pw.SizedBox(height: 6),
+        if (practice.heats.isNotEmpty) ...[
+          pw.SizedBox(height: 6),
+          pw.Container(
+            padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: pw.BoxDecoration(
+              color: PdfColors.grey100,
+              borderRadius: pw.BorderRadius.circular(4),
+            ),
+            child: pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text('HEATS',
+                    style: pw.TextStyle(
+                        fontSize: 7.5,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.grey700)),
+                pw.SizedBox(width: 10),
+                pw.Expanded(
+                  child: pw.Wrap(
+                    spacing: 14,
+                    runSpacing: 3,
+                    children: [
+                      for (final heat in practice.heats)
+                        pw.Text(
+                            '${heat.name}: ${formatClock(basePaceForHeat(practice, heat))} / 100 $unit',
+                            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey800)),
+                      if (practice.heatInterval > 0)
+                        pw.Text('starts every ${formatClock(practice.heatInterval)}',
+                            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          pw.SizedBox(height: 8),
+        ],
         pw.Table(
           columnWidths: const {
             0: pw.FixedColumnWidth(18),

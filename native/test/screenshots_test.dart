@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:swimset/main.dart';
+import 'package:swimset/src/models.dart';
 import 'package:swimset/src/state.dart';
 import 'package:swimset/src/store.dart';
 
@@ -89,6 +90,31 @@ void main() {
     state.setTab(3);
     await tester.pumpAndSettle();
     await _capture(tester, key, '08-mobile-poolside');
+
+    final heatsPractice = starterPractice()
+      ..title = 'Heat practice'
+      ..heats = [
+        Heat(id: 'h1', name: 'Heat 1', basePace: 95),
+        Heat(id: 'h2', name: 'Heat 2', basePace: 110),
+        Heat(id: 'h3', name: 'Heat 3'),
+      ]
+      ..heatInterval = 90;
+    state.replaceDraft(heatsPractice);
+
+    tester.view.physicalSize = const Size(1440, 2350);
+    state.setTab(0);
+    await tester.pumpAndSettle();
+    await _capture(tester, key, '09-builder-heats');
+
+    tester.view.physicalSize = const Size(1440, 1250);
+    state.startRun();
+    await tester.pumpAndSettle();
+    await _capture(tester, key, '10-poolside-heats');
+
+    tester.view.physicalSize = const Size(390, 1950);
+    state.setTab(0);
+    await tester.pumpAndSettle();
+    await _capture(tester, key, '11-mobile-heats');
 
     if (errors.isNotEmpty) {
       final directory = Directory('build/screens')..createSync(recursive: true);

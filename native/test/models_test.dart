@@ -222,4 +222,87 @@ void main() {
       expect(text, contains('Made with SwimSet'));
     });
   });
+
+  group('heats', () {
+    Practice build() => Practice(
+          id: 'p1',
+          title: 'Heats',
+          course: Course.scm,
+          basePace: 100,
+          roundTo: 5,
+          heatInterval: 90,
+          heats: [
+            Heat(id: 'h1', name: 'Heat 1', basePace: 110),
+            Heat(id: 'h2', name: 'Heat 2'),
+          ],
+          sets: [
+            PracticeSet(
+              id: 's1',
+              type: SetType.main,
+              reps: 4,
+              distance: 100,
+              stroke: Stroke.free,
+              rest: 20,
+            ),
+          ],
+        );
+
+    test('each heat swims off its own pace', () {
+      final practice = build();
+      final set = practice.sets.single;
+      expect(sendOffForSet(set, practice), 120);
+      expect(sendOffForSet(set, practice, heat: practice.heats[0]), 130);
+      expect(sendOffForSet(set, practice, heat: practice.heats[1]), 120);
+      expect(basePaceForHeat(practice, practice.heats[1]), 100);
+    });
+
+    test('totals and steps follow the heat', () {
+      final practice = build();
+      expect(practiceTotals(practice).seconds, 480);
+      expect(practiceTotals(practice, heat: practice.heats[0]).seconds, 520);
+      final steps = compileSteps(practice, heat: practice.heats[0]);
+      expect(steps.length, 4);
+      expect(steps.first.sendOff, 130);
+      expect(steps.first.durationMs, 130000);
+      expect(steps.first.label, contains('2:10'));
+    });
+
+    test('start offsets stagger the heats', () {
+      final practice = build();
+      expect(heatStartOffset(practice, 0), 0);
+      expect(heatStartOffset(practice, 1), 90);
+      expect(heatStartOffset(practice, 2), 180);
+      expect(heatDurationMs(practice, practice.heats[0]), 520000);
+    });
+
+    test('heats survive JSON and text export', () {
+      final practice = build();
+      final restored = Practice.fromJson(practice.toJson());
+      expect(restored.heats.length, 2);
+      expect(restored.heats.first.name, 'Heat 1');
+      expect(restored.heats.first.basePace, 110);
+      expect(restored.heats[1].basePace, isNull);
+      expect(restored.heatInterval, 90);
+      final text = practiceToText(practice);
+      expect(text, contains('Heats: Heat 1 1:50 · Heat 2 1:40'));
+      expect(text, contains('Heat 1 2:10'));
+      expect(text, contains('BY HEAT:'));
+    });
+
+    test('sparse heats are normalized', () {
+      final restored = normalizePractice({
+        'heats': [
+          {'basePace': 5},
+          {'name': '  ', 'basePace': 200},
+        ],
+        'heatInterval': -30,
+      });
+      expect(restored.heats.length, 2);
+      expect(restored.heats.first.name, 'Heat 1');
+      expect(restored.heats.first.basePace, isNull);
+      expect(restored.heats[1].name, 'Heat 2');
+      expect(restored.heats[1].basePace, 200);
+      expect(restored.heatInterval, 0);
+    });
+  });
 }

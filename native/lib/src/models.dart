@@ -329,6 +329,47 @@ class PracticeSet {
   static PracticeSet create([Map<String, dynamic>? overrides]) => normalizeSet(overrides ?? const {});
 }
 
+/// A group of swimmers that shares a lane and a pace. Heats are optional:
+/// a practice without heats is timed off [Practice.basePace].
+class Heat {
+  Heat({
+    required this.id,
+    required this.name,
+    this.basePace,
+  });
+
+  String id;
+  String name;
+
+  /// Seconds per 100; null means "use the practice base pace".
+  int? basePace;
+
+  Heat copy({bool freshId = false}) => Heat(
+        id: freshId ? uid('h') : id,
+        name: name,
+        basePace: basePace,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'basePace': basePace,
+      };
+
+  factory Heat.fromJson(Map<String, dynamic> raw) => normalizeHeat(raw, 0);
+}
+
+Heat normalizeHeat(Map<String, dynamic> raw, int index) {
+  final name = raw['name'];
+  final pace = raw['basePace'];
+  final clean = name is String ? name.trim() : '';
+  return Heat(
+    id: raw['id'] is String && (raw['id'] as String).isNotEmpty ? raw['id'] as String : uid('h'),
+    name: clean.isNotEmpty ? clean.substring(0, math.min(40, clean.length)) : 'Heat ${index + 1}',
+    basePace: pace is num && pace >= 20 && pace <= 1800 ? pace.round() : null,
+  );
+}
+
 class Practice {
   Practice({
     required this.id,
@@ -341,10 +382,13 @@ class Practice {
     this.focus = '',
     this.notes = '',
     List<PracticeSet>? sets,
+    List<Heat>? heats,
+    this.heatInterval = 0,
     String? createdAt,
     String? updatedAt,
   })  : date = date ?? todayISO(),
         sets = sets ?? <PracticeSet>[],
+        heats = heats ?? <Heat>[],
         createdAt = createdAt ?? DateTime.now().toIso8601String(),
         updatedAt = updatedAt ?? DateTime.now().toIso8601String();
 
@@ -358,6 +402,13 @@ class Practice {
   String focus;
   String notes;
   List<PracticeSet> sets;
+
+  /// Optional pace groups. Empty means one implicit heat using [basePace].
+  List<Heat> heats;
+
+  /// Seconds between consecutive heat send-offs (0 = all heats start together).
+  int heatInterval;
+
   String createdAt;
   String updatedAt;
 
@@ -372,6 +423,8 @@ class Practice {
         focus: focus,
         notes: notes,
         sets: sets.map((set) => set.copy(freshId: freshId)).toList(),
+        heats: heats.map((heat) => heat.copy(freshId: freshId)).toList(),
+        heatInterval: heatInterval,
         createdAt: createdAt,
         updatedAt: updatedAt,
       );
@@ -387,6 +440,8 @@ class Practice {
         'focus': focus,
         'notes': notes,
         'sets': sets.map((set) => set.toJson()).toList(),
+        'heats': heats.map((heat) => heat.toJson()).toList(),
+        'heatInterval': heatInterval,
         'createdAt': createdAt,
         'updatedAt': updatedAt,
       };
@@ -429,6 +484,8 @@ Practice normalizePractice(Map<String, dynamic> raw) {
   final basePace = raw['basePace'];
   final roundTo = raw['roundTo'];
   final sets = raw['sets'];
+  final heats = raw['heats'];
+  final heatInterval = raw['heatInterval'];
   return Practice(
     id: raw['id'] is String && (raw['id'] as String).isNotEmpty ? raw['id'] as String : uid('p'),
     title: title is String && title.trim().isNotEmpty ? title.trim() : 'Untitled practice',
@@ -448,6 +505,17 @@ Practice normalizePractice(Map<String, dynamic> raw) {
             .map((entry) => normalizeSet(Map<String, dynamic>.from(entry)))
             .toList()
         : <PracticeSet>[],
+    heats: heats is List
+        ? heats
+            .whereType<Map>()
+            .take(8)
+            .toList()
+            .asMap()
+            .entries
+            .map((entry) => normalizeHeat(Map<String, dynamic>.from(entry.value), entry.key))
+            .toList()
+        : <Heat>[],
+    heatInterval: clampInt(heatInterval is num ? heatInterval.round() : 0, 0, 1800),
     createdAt: raw['createdAt'] is String ? raw['createdAt'] as String : now,
     updatedAt: raw['updatedAt'] is String ? raw['updatedAt'] as String : now,
   );
@@ -467,34 +535,44 @@ Practice clonePractice(Practice source, {bool keepId = false}) {
 /* Interval / pace maths                                               */
 /* ------------------------------------------------------------------ */
 
-int paceForSet(PracticeSet set, Practice practice) {
+/// The pace a heat swims at; heats without their own pace inherit the practice.
+int basePaceForHeat(Practice practice, Heat? heat) => heat?.basePace ?? practice.basePace;
+
+int paceForSet(PracticeSet set, Practice practice, {Heat? heat}) {
   final target = set.pace100;
-  return target != null && target > 0 ? target : practice.basePace;
+  return target != null && target > 0 ? target : basePaceForHeat(practice, heat);
 }
 
-double swimPerRep(PracticeSet set, Practice practice) =>
-    (set.distance / 100) * paceForSet(set, practice);
+double swimPerRep(PracticeSet set, Practice practice, {Heat? heat}) =>
+    (set.distance / 100) * paceForSet(set, practice, heat: heat);
 
-double swimSecondsForSet(PracticeSet set, Practice practice) =>
-    swimPerRep(set, practice) * set.reps;
+double swimSecondsForSet(PracticeSet set, Practice practice, {Heat? heat}) =>
+    swimPerRep(set, practice, heat: heat) * set.reps;
 
-int? sendOffForSet(PracticeSet set, Practice practice) {
+int? sendOffForSet(PracticeSet set, Practice practice, {Heat? heat}) {
   if (set.intervalMode == IntervalMode.none) return null;
   if (set.intervalMode == IntervalMode.manual) {
     return set.interval != null && set.interval! > 0 ? set.interval : null;
   }
-  return roundUpTo(swimPerRep(set, practice) + set.rest, practice.roundTo);
+  return roundUpTo(swimPerRep(set, practice, heat: heat) + set.rest, practice.roundTo);
 }
 
-int durationForSet(PracticeSet set, Practice practice) {
-  final sendOff = sendOffForSet(set, practice);
+int durationForSet(PracticeSet set, Practice practice, {Heat? heat}) {
+  final sendOff = sendOffForSet(set, practice, heat: heat);
   if (sendOff != null) return sendOff * set.reps;
-  final swim = swimSecondsForSet(set, practice);
+  final swim = swimSecondsForSet(set, practice, heat: heat);
   return (swim + set.rest * math.max(0, set.reps - 1)).round();
 }
 
-int minSendOffForSet(PracticeSet set, Practice practice) =>
-    roundUpTo(swimPerRep(set, practice), practice.roundTo);
+int minSendOffForSet(PracticeSet set, Practice practice, {Heat? heat}) =>
+    roundUpTo(swimPerRep(set, practice, heat: heat), practice.roundTo);
+
+/// Seconds after the first heat when heat [index] is sent out.
+int heatStartOffset(Practice practice, int index) => math.max(0, index) * practice.heatInterval;
+
+/// Number of milliseconds one heat spends in the pool.
+int heatDurationMs(Practice practice, Heat heat) =>
+    compileSteps(practice, heat: heat).fold<int>(0, (sum, step) => sum + step.durationMs);
 
 class Totals {
   Totals({
@@ -516,7 +594,7 @@ class Totals {
   int get restSeconds => math.max(0, seconds - swimSeconds);
 }
 
-Totals practiceTotals(Practice practice) {
+Totals practiceTotals(Practice practice, {Heat? heat}) {
   var distance = 0;
   var reps = 0;
   var seconds = 0;
@@ -526,8 +604,8 @@ Totals practiceTotals(Practice practice) {
     final volume = set.reps * set.distance;
     distance += volume;
     reps += set.reps;
-    seconds += durationForSet(set, practice);
-    swim += swimSecondsForSet(set, practice);
+    seconds += durationForSet(set, practice, heat: heat);
+    swim += swimSecondsForSet(set, practice, heat: heat);
     byStroke[set.stroke] = (byStroke[set.stroke] ?? 0) + volume;
   }
   return Totals(
@@ -540,10 +618,10 @@ Totals practiceTotals(Practice practice) {
   );
 }
 
-String setLabel(PracticeSet set, Practice practice) {
+String setLabel(PracticeSet set, Practice practice, {Heat? heat}) {
   final unit = practice.course.unit;
   var label = '${formatNumber(set.reps)} × ${formatNumber(set.distance)} $unit ${set.stroke.label}';
-  final sendOff = sendOffForSet(set, practice);
+  final sendOff = sendOffForSet(set, practice, heat: heat);
   if (sendOff != null) label += ' on ${formatClock(sendOff)}';
   return label;
 }
@@ -574,12 +652,12 @@ class RunStep {
   final List<String> equipment;
 }
 
-List<RunStep> compileSteps(Practice practice) {
+List<RunStep> compileSteps(Practice practice, {Heat? heat}) {
   final steps = <RunStep>[];
   for (var setIndex = 0; setIndex < practice.sets.length; setIndex++) {
     final set = practice.sets[setIndex];
-    final sendOff = sendOffForSet(set, practice);
-    final perRep = swimPerRep(set, practice);
+    final sendOff = sendOffForSet(set, practice, heat: heat);
+    final perRep = swimPerRep(set, practice, heat: heat);
     for (var rep = 0; rep < set.reps; rep++) {
       steps.add(RunStep(
         key: '${set.id}:$rep',
@@ -587,7 +665,7 @@ List<RunStep> compileSteps(Practice practice) {
         rep: rep + 1,
         reps: set.reps,
         type: set.type,
-        label: setLabel(set, practice),
+        label: setLabel(set, practice, heat: heat),
         sendOff: sendOff,
         durationMs: ((sendOff ?? perRep) * 1000).round(),
         notes: set.notes,
@@ -663,6 +741,10 @@ List<PracticeIssue> validatePractice(Practice practice) {
   if (sets.isNotEmpty && !sets.any((set) => set.type == SetType.cooldown)) {
     issues.add(PracticeIssue(IssueLevel.warn, 'No cool-down set — consider adding one.'));
   }
+  if (practice.heats.length > 1 && practice.heatInterval <= 0) {
+    issues.add(PracticeIssue(IssueLevel.info,
+        'Heats start together — add a heat interval to stagger them.'));
+  }
   if (practice.basePace <= 0) {
     issues.add(PracticeIssue(
         IssueLevel.error, 'Set a base pace per 100 for automatic send-offs.'));
@@ -702,6 +784,15 @@ String practiceToText(Practice practice) {
   if (practice.focus.isNotEmpty) lines.add('Focus: ${practice.focus}');
   lines.add('Base pace: ${formatClock(practice.basePace)} / 100 $unit · '
       '${formatNumber(totals.distance)} $unit · ~${formatDuration(totals.seconds)}');
+  if (practice.heats.isNotEmpty) {
+    final paceList = practice.heats
+        .map((heat) => '${heat.name} ${formatClock(basePaceForHeat(practice, heat))}')
+        .join(' · ');
+    final stagger = practice.heatInterval > 0
+        ? ' · starts every ${formatClock(practice.heatInterval)}'
+        : '';
+    lines.add('Heats: $paceList$stagger');
+  }
   lines.add('');
   for (var i = 0; i < practice.sets.length; i++) {
     final set = practice.sets[i];
@@ -715,11 +806,24 @@ String practiceToText(Practice practice) {
         '${(i + 1).toString().padLeft(2)}. ${set.type.label}: ${set.reps} × ${set.distance} $unit ${set.stroke.label}$timing';
     if (set.equipment.isNotEmpty) line += ' w/ ${set.equipment.join(' + ')}';
     lines.add(line);
+    if (practice.heats.isNotEmpty) {
+      final sends = practice.heats.map((heat) {
+        final sendOff = sendOffForSet(set, practice, heat: heat);
+        return '${heat.name} ${sendOff == null ? 'swim' : formatClock(sendOff)}';
+      }).join(' · ');
+      lines.add('    $sends');
+    }
     if (set.notes.isNotEmpty) lines.add('    ${set.notes}');
   }
   lines.add('');
   lines.add(
       'TOTAL: ${formatNumber(totals.distance)} $unit · ${totals.reps} reps · ~${formatDuration(totals.seconds)}');
+  if (practice.heats.isNotEmpty) {
+    final byHeat = practice.heats
+        .map((heat) => '${heat.name} ~${formatDuration(practiceTotals(practice, heat: heat).seconds)}')
+        .join(' · ');
+    lines.add('BY HEAT: $byHeat');
+  }
   if (practice.notes.isNotEmpty) {
     lines.add('');
     lines.add('NOTES');
