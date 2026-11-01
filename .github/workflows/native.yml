@@ -100,20 +100,46 @@ jobs:
       - name: Collect outputs
         if: always()
         run: |
-          mkdir -p ../ci-artifacts/screens
+          mkdir -p ../ci-artifacts/screens ../dist
           cp build/screens/*.png ../ci-artifacts/screens/ 2>/dev/null || true
           cp build/screens/layout-errors.txt ../ci-artifacts/screens/ 2>/dev/null || true
+          # Every run ships the binaries in the workflow artifact; only [ship]
+          # commits copy them into the branch so git history stays small.
+          cp build/app/outputs/flutter-apk/app-release.apk ../dist/swimset-2.0.0-universal.apk 2>/dev/null || true
+          cp build/deb/swimset_2.0.0_amd64.deb ../dist/ 2>/dev/null || true
+          ls -lh ../dist || true
           if git -C .. log -1 --pretty=%B | grep -qF '[ship]'; then
-            cp build/app/outputs/flutter-apk/app-release.apk ../ci-artifacts/swimset-2.0.0-universal.apk 2>/dev/null || true
-            cp build/deb/swimset_2.0.0_amd64.deb ../ci-artifacts/ 2>/dev/null || true
+            cp ../dist/* ../ci-artifacts/ 2>/dev/null || true
           fi
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: swimset-native
-          path: ci-artifacts
+          path: |
+            ci-artifacts
+            dist
           if-no-files-found: warn
+
+      - name: Publish downloadable release
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! git -C .. log -1 --pretty=%B | grep -qF '[ship]'; then
+            echo "Not a ship commit; skipping release upload."
+            exit 0
+          fi
+          test -f ../dist/swimset-2.0.0-universal.apk
+          test -f ../dist/swimset_2.0.0_amd64.deb
+          gh release view v2.0.0 >/dev/null 2>&1 || gh release create v2.0.0 \
+            --target "${GITHUB_SHA}" \
+            --title "SwimSet 2.0.0" \
+            --notes "Native SwimSet: Android/Chromebook APK and Debian .deb, built from ${GITHUB_SHA}."
+          gh release upload v2.0.0 \
+            ../dist/swimset-2.0.0-universal.apk \
+            ../dist/swimset_2.0.0_amd64.deb \
+            --clobber
 
       - name: Commit CI outputs to the branch
         if: always()
