@@ -1,0 +1,9 @@
+Analyzing native...                                             
+
+   info • Use the null-aware operator '?.' rather than an explicit 'null' comparison • lib/src/models.dart:190:10 • prefer_null_aware_operators
+   info • The 'child' argument should be last in widget constructor invocations • lib/src/ui/builder.dart:427:27 • sort_child_properties_last
+  error • The named parameter 'style' isn't defined • lib/src/ui/builder.dart:428:27 • undefined_named_parameter
+  error • The method 'IconAction' isn't defined for the type 'HomeShell' • lib/src/ui/shell.dart:56:15 • undefined_method
+  error • The method 'IconAction' isn't defined for the type 'HomeShell' • lib/src/ui/shell.dart:61:15 • undefined_method
+
+5 issues found. (ran in 16.1s)
