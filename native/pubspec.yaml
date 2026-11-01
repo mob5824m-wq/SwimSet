@@ -1,0 +1,38 @@
+name: swimset
+description: Native swim practice maker for Android, Chromebooks and Debian.
+publish_to: none
+version: 2.0.0+2
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  audioplayers: ^6.1.0
+  file_selector: ^1.0.3
+  path_provider: ^2.1.4
+  pdf: ^3.11.1
+  shared_preferences: ^2.3.2
+  wakelock_plus: ^1.2.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/audio/beep.wav
+  fonts:
+    - family: Lato
+      fonts:
+        - asset: assets/fonts/Lato-Regular.ttf
+        - asset: assets/fonts/Lato-Italic.ttf
+          style: italic
+        - asset: assets/fonts/Lato-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Lato-BoldItalic.ttf
+          weight: 700
+          style: italic
