@@ -84,7 +84,20 @@ class SwimTheme {
       chipTheme: ChipThemeData(
         side: BorderSide(color: outline),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
-        labelStyle: const TextStyle(fontFamily: 'Lato', fontSize: 12, fontWeight: FontWeight.w700),
+        // Chips need an explicit label colour: a bare text style loses the
+        // colour and the text inherits the surrounding (white) default.
+        labelStyle: TextStyle(
+          fontFamily: 'Lato',
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: scheme.onSurfaceVariant,
+        ),
+        secondaryLabelStyle: TextStyle(
+          fontFamily: 'Lato',
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: scheme.onSecondaryContainer,
+        ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: isDark ? const Color(0xFF0B1B23) : Colors.white,
