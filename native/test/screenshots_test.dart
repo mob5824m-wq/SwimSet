@@ -103,20 +103,27 @@ void main() {
     heatsPractice.sets[1].blockRounds = 3;
     heatsPractice.sets[2].blockId = 'b1';
     heatsPractice.sets[2].blockRounds = 3;
-    heatsPractice.sets[2].heatSendOffs['h1'] = 135;
+    heatsPractice.sets[1].heatSendOffs['h1'] = 135;
     state.replaceDraft(heatsPractice);
 
-    tester.view.physicalSize = const Size(1440, 2350);
+    tester.view.physicalSize = const Size(1440, 2650);
     state.setTab(0);
     await tester.pumpAndSettle();
     await _capture(tester, key, '09-builder-heats');
+
+    // Open the per-heat send-off overrides on the blocked main set.
+    await tester.ensureVisible(find.text('More').at(1));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('More').at(1));
+    await tester.pumpAndSettle();
+    await _capture(tester, key, '12-heat-overrides');
 
     tester.view.physicalSize = const Size(1440, 1250);
     state.startRun();
     await tester.pumpAndSettle();
     await _capture(tester, key, '10-poolside-heats');
 
-    tester.view.physicalSize = const Size(390, 2200);
+    tester.view.physicalSize = const Size(390, 2600);
     state.setTab(0);
     await tester.pumpAndSettle();
     await _capture(tester, key, '11-mobile-heats');

@@ -27,6 +27,10 @@ network calls.
 | --- | --- | --- |
 | ![Heats with per-heat paces](docs/screenshots/builder-heats.png) | ![Poolside heat strip and staggered starts](docs/screenshots/poolside-heats.png) | ![Mobile heats](docs/screenshots/mobile-heats.png) |
 
+| Set block, start times and a per-heat send-off |
+| --- |
+| ![A repeat block with a manual Heat 1 send-off](docs/screenshots/heat-overrides.png) |
+
 Screenshots are rendered from the real Flutter widget tree by the CI screenshot test
 (`make screens`), at desktop and phone sizes.
 

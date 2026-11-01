@@ -193,7 +193,7 @@ class _Sidebar extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
               child: Text(
-                'SwimSet 2.0 · offline',
+                'SwimSet 2.1 · offline',
                 style: TextStyle(fontSize: 10, color: SwimTheme.muted(context)),
               ),
             ),
@@ -289,7 +289,7 @@ String _themeLabel(ThemeMode mode) => switch (mode) {
 Future<void> showHelp(BuildContext context) => showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('SwimSet 2.0'),
+        title: const Text('SwimSet 2.1'),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
