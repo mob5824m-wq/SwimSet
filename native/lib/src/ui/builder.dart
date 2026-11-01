@@ -452,6 +452,7 @@ class _BuilderPageState extends State<BuilderPage> {
                   label: 'Round send-offs',
                   child: DropdownButtonFormField<int>(
                     value: draft.roundTo,
+                    isExpanded: true,
                     items: [
                       for (final step in roundSteps)
                         DropdownMenuItem(value: step, child: Text('To $step sec')),
@@ -751,13 +752,22 @@ class _SetEditorCardState extends State<SetEditorCard> {
                       children: [
                         TypePill(set.type),
                         const SizedBox(width: 8),
-                        Flexible(
+                        Expanded(
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<SetType>(
                               value: set.type,
                               isDense: true,
+                              isExpanded: true,
                               borderRadius: BorderRadius.circular(12),
                               style: Theme.of(context).textTheme.titleMedium,
+                              selectedItemBuilder: (context) => [
+                                for (final type in SetType.values)
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(type.label,
+                                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                                  ),
+                              ],
                               items: [
                                 for (final type in SetType.values)
                                   DropdownMenuItem(value: type, child: Text(type.label)),
@@ -768,7 +778,7 @@ class _SetEditorCardState extends State<SetEditorCard> {
                             ),
                           ),
                         ),
-                        const Spacer(),
+                        const SizedBox(width: 4),
                         IconAction(
                           icon: _open ? Icons.expand_less : Icons.expand_more,
                           tooltip: _open ? 'Collapse set' : 'Expand set',

@@ -5,6 +5,8 @@ import 'package:swimset/main.dart';
 import 'package:swimset/src/state.dart';
 import 'package:swimset/src/store.dart';
 
+import 'font_loader.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -20,6 +22,7 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
+    await loadAppFonts();
     final store = await PracticeStore.open();
     final state = AppState.bootstrap(store);
     await tester.pumpWidget(SwimSetApp(state: state));
@@ -50,6 +53,8 @@ void main() {
     await tester.pump();
     expect(state.draft.title, 'Morning set');
 
+    await tester.ensureVisible(find.text('Add set'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Add set'));
     await tester.pumpAndSettle();
     expect(state.draft.sets.length, 4);
@@ -68,6 +73,7 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
+    await loadAppFonts();
     final store = await PracticeStore.open();
     await store.savePractice(starterPractice()..title = 'Saved practice');
     final state = AppState.bootstrap(store);
