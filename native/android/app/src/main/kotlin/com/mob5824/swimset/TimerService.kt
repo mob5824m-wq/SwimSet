@@ -33,7 +33,13 @@ class TimerService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
+        // A null intent means the process was killed and the system restarted the
+        // service; the Dart clock is gone, so there is nothing left to keep alive.
+        if (intent == null) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        when (intent.action) {
             ACTION_PAUSE -> {
                 running = false
                 onAction?.invoke("pause")
@@ -44,13 +50,13 @@ class TimerService : Service() {
             }
             ACTION_NEXT -> onAction?.invoke("next")
             else -> {
-                intent?.getStringExtra(EXTRA_TITLE)?.let { title = it }
-                intent?.getStringExtra(EXTRA_TEXT)?.let { text = it }
-                running = intent?.getBooleanExtra(EXTRA_RUNNING, true) ?: true
+                intent.getStringExtra(EXTRA_TITLE)?.let { title = it }
+                intent.getStringExtra(EXTRA_TEXT)?.let { text = it }
+                running = intent.getBooleanExtra(EXTRA_RUNNING, true)
             }
         }
         publish()
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     /** Called from the host activity while the timer ticks. */
