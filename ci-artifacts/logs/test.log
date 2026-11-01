@@ -25,6 +25,10 @@
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: blocks and heat overrides blocks expand into steps and totals
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: blocks and heat overrides per-heat send-off overrides win over the heat pace
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: blocks and heat overrides explicit heat offsets win over the interval
+✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: lanes and volume balance heat lanes survive JSON and the text export
+✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: lanes and volume balance volume split follows the set types
+✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: lanes and volume balance volume targets clamp and default
+✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: lanes and volume balance reordering detaches a broken block
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: saves, lists and deletes practices
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: stores the working draft and theme
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: exports and imports the library
@@ -42,5 +46,8 @@
 ::group::✅ /home/runner/work/SwimSet/SwimSet/native/test/widget_test.dart: a block shows its rounds in the builder
 [fonts] MaterialIcons <- /opt/hostedtoolcache/flutter/stable-3.24.5-x64/flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf
 ::endgroup::
+::group::✅ /home/runner/work/SwimSet/SwimSet/native/test/widget_test.dart: sets can be copied, pasted and dragged into a new order
+[fonts] MaterialIcons <- /opt/hostedtoolcache/flutter/stable-3.24.5-x64/flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf
+::endgroup::
 
-🎉 35 tests passed.
+🎉 40 tests passed.
