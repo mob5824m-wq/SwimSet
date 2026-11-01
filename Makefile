@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 PORT ?= 8080
-VERSION ?= 2.1.0
+VERSION ?= 2.2.0
 NATIVE := native
 
 .PHONY: help apk linux deb screens test-native serve test test-ui icons clean

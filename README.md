@@ -27,7 +27,7 @@ network calls.
 | --- | --- | --- |
 | ![Heats with per-heat paces](docs/screenshots/builder-heats.png) | ![Poolside heat strip and staggered starts](docs/screenshots/poolside-heats.png) | ![Mobile heats](docs/screenshots/mobile-heats.png) |
 
-| Set block, start times and a per-heat send-off |
+| Set block, start times, lanes and a per-heat send-off |
 | --- |
 | ![A repeat block with a manual Heat 1 send-off](docs/screenshots/heat-overrides.png) |
 
@@ -92,11 +92,11 @@ Screenshots are rendered from the real Flutter widget tree by the CI screenshot 
 
 ### Debian, and Chromebooks with the Linux container
 
-Download `swimset_2.1.0_amd64.deb` from the [latest release][release] (or from
+Download `swimset_2.2.0_amd64.deb` from the [latest release][release] (or from
 `ci-artifacts/` in this repository) and install it:
 
 ```bash
-sudo apt install ./swimset_2.1.0_amd64.deb
+sudo apt install ./swimset_2.2.0_amd64.deb
 ```
 
 Then launch **SwimSet** from the applications menu, or run `swimset`. The package
@@ -110,11 +110,11 @@ Chromebooks that run Android apps you can install the APK instead.
 
 ### Android and ChromeOS (Android apps)
 
-Download `swimset-2.1.0-universal.apk` from the [latest release][release] and open
+Download `swimset-2.2.0-universal.apk` from the [latest release][release] and open
 it on the device (allow installing from your file manager when prompted), or use adb:
 
 ```bash
-adb install swimset-2.1.0-universal.apk
+adb install swimset-2.2.0-universal.apk
 ```
 
 - Android 6.0+ (`minSdk 23`); the universal APK contains `arm64-v8a`,
@@ -133,7 +133,7 @@ libgstreamer-plugins-base1.0-dev`.
 
 ```bash
 make apk         # native/build/app/outputs/flutter-apk/app-release.apk
-make deb         # native/build/deb/swimset_2.1.0_amd64.deb
+make deb         # native/build/deb/swimset_2.2.0_amd64.deb
 make test-native # 24 Flutter unit/widget tests
 ```
 
@@ -147,8 +147,8 @@ The supported builder is CI. `.github/workflows/native.yml` runs on every push:
    the commit message contains `[ship]` — refresh the GitHub release and commit the
    binaries, logs and screenshots to `ci-artifacts/`.
 
-Every run's `swimset-native` artifact contains `swimset-2.1.0-universal.apk` and
-`swimset_2.1.0_amd64.deb`, so no build ever ends without downloadable binaries.
+Every run's `swimset-native` artifact contains `swimset-2.2.0-universal.apk` and
+`swimset_2.2.0_amd64.deb`, so no build ever ends without downloadable binaries.
 
 [release]: https://github.com/mob5824m-wq/SwimSet/releases/latest
 
