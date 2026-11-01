@@ -59,6 +59,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(state.draft.sets.length, 4);
 
+    await tester.ensureVisible(find.text('Save'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
     expect(state.practices.length, 1);
