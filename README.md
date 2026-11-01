@@ -1,182 +1,155 @@
 # SwimSet
 
-**A swim practice maker for Debian, Android and Chromebooks.**
+**A native swim practice maker for Debian, Android and Chromebooks.**
 
-SwimSet is an offline-first web app for coaches and swimmers. Build a practice set
-by set, let it calculate send-offs from your base pace, print a deck sheet, and run
-the whole thing poolside as a rep-by-rep timer.
+SwimSet turns a base pace into a whole practice: build the session set by set, let
+it calculate send-offs, print a deck sheet, then run it poolside with a rep-by-rep
+timer. It is a native app — one Dart/Flutter codebase compiled to a real Android APK
+and a real GTK Linux binary. No WebView, no browser window, no accounts and no
+network calls.
 
-- No accounts, no server, no tracking — everything stays on the device.
-- Installable PWA (ChromeOS, Android, desktop Chrome) and a Debian `.deb` package.
-- Zero runtime dependencies and no build step: plain HTML, CSS and ES modules.
-
-![SwimSet icon](icons/icon-192.png)
+- **Native on both targets.** Android/ChromeOS gets an APK; Debian (and the Linux
+  container on Intel/AMD Chromebooks) gets a `.deb` with a GTK 3 executable.
+- **Offline by design.** The release APK does not even request the `INTERNET`
+  permission. Practices live in app storage on the device.
+- **Built by CI.** GitHub Actions compiles both binaries and commits them, together
+  with the test logs and UI screenshots, back to the branch.
 
 ## Features
 
 **Practice builder**
-- Set types with colour accents: warm-up, pre-set, drill, kick, pull, main, sprint,
-  IM, recovery, test and cool-down.
+- Twelve set types with colour accents: warm-up, pre-set, drill, kick, pull, main,
+  sprint, IM, recovery, test, cool-down and choice.
 - Reps × distance, stroke, equipment, target pace, rest and notes per set.
 - Automatic send-offs: target swim time + rest, rounded up to 1/5/10 seconds.
   Override with a custom send-off or mark a set as a continuous swim.
-- Course support for SCY (25 yd), SCM (25 m) and LCM (50 m).
+- Courses SCY (25 yd), SCM (25 m) and LCM (50 m), including the send-off maths.
 - Live totals: volume, estimated session time, reps, sets and volume by stroke.
-- A "practice check" that warns about missing warm-ups/cool-downs and send-offs
-  that are shorter than the target swim time.
+- A *practice check* that flags missing warm-ups/cool-downs and send-offs shorter
+  than the target swim time.
 
 **Pace tools**
 - Send-off ladder for 25 → 500 at any base pace and rest.
-- Approximate course converter (SCY ↔ SCM ↔ LCM).
-- "Pace from a swim" calculator to turn a known time into a pace per 100.
+- Approximate course converter (SCY ↔ SCM ↔ LCM, ×1.11 and ×1.13).
+- “Pace from a swim” to turn a known time into a pace per 100.
 
 **Poolside runner**
 - Rep-by-rep timer with a progress ring, overall progress and elapsed time.
-- Beeps at 3-2-1 and at the end of each send-off; muted with one tap.
-- Optional auto-advance, previous/next/jump, fullscreen and screen wake lock.
-- Big touch targets sized for a phone at the end of a lane.
+- Beeps at 3-2-1 and at the end of each send-off, muted with one tap.
+- Auto-advance, previous/next/jump, fullscreen and a screen that stays awake while
+  the timer runs (handled by the Android window flags, not a background service).
+- Big touch targets sized for a phone propped up at the end of a lane.
 
 **Library and sharing**
 - Save, search, sort, duplicate and delete practices.
-- Autosaved working draft, so a refresh never loses your session.
-- Import/export JSON (single practice or the whole library), plain-text sheets,
-  print-to-PDF deck sheets with tick boxes, and the native share sheet.
-
-**Everywhere**
-- Responsive phone/tablet/desktop layout, light and dark themes.
-- Installable and fully offline after the first load (service worker).
-- Keyboard shortcuts: `Ctrl/Cmd+S` save, `Ctrl/Cmd+P` print, `Space` start/pause
-  the poolside timer, `←`/`→` previous/next rep, `?` help.
-
-## Quick start
-
-```bash
-git clone https://github.com/mob5824m-wq/SwimSet.git
-cd SwimSet
-python3 -m http.server 8080     # or: make serve / npm start
-# open http://localhost:8080
-```
-
-No install, no bundler. Serving over HTTP is required (rather than opening
-`index.html` from disk) because the app uses ES modules and a service worker.
+- Autosaved working draft, so closing the app never loses the session.
+- Import/export JSON (one practice or the whole library), plain-text sheets and
+  print-ready PDF deck sheets with tick boxes.
+- Light, dark and follow-system themes; responsive phone, tablet, Chromebook and
+  desktop layouts.
 
 ## Install
 
-### Chromebook and Android (recommended)
+### Debian, and Chromebooks with the Linux container
 
-1. Open the app in Chrome — either a hosted copy (see GitHub Pages below) or a
-   local server (`http://localhost:8080`).
-2. Chrome menu → **Install app** (Chromebook/desktop) or **Add to Home screen**
-   (Android). The **Install** button in SwimSet's header appears when Chrome
-   offers installation.
-3. Launch it from the shelf/app drawer. It opens full screen and works offline.
-
-> Service workers (and therefore offline mode) require HTTPS or `localhost`.
-> Opening the files over plain HTTP from another machine will still run the app,
-> but without the offline cache.
-
-### GitHub Pages
-
-A workflow is included at `.github/workflows/pages.yml`. In the repository,
-enable **Settings → Pages → Build and deployment → Source: GitHub Actions**, then
-push to `main`. The published URL can be installed as a PWA on Chromebooks,
-Android and desktop Chrome.
-
-### Debian / Ubuntu
-
-Build and install the `.deb`:
+Download `swimset_2.0.0_amd64.deb` (from `ci-artifacts/` in this repository or the
+`swimset-native` artifact of the workflow run) and install it:
 
 ```bash
-make deb
-sudo apt install ./build/swimset_1.0.0_all.deb
-swimset
+sudo apt install ./swimset_2.0.0_amd64.deb
 ```
 
-Build artefacts are not committed; `make deb` writes the package to `build/`. The package:
+Then launch **SwimSet** from the applications menu, or run `swimset`. The package
+installs the bundle to `/opt/swimset`, a launcher in `/usr/bin`, and a desktop entry
+and icon under `/usr/share`. Runtime dependencies: GTK 3, GLib, libstdc++ and the
+GStreamer base libraries (used for the countdown beeps).
 
-- installs the app to `/usr/share/swimset`;
-- adds `/usr/bin/swimset` and an application-menu entry with icons;
-- serves the app on a random `127.0.0.1` port with `python3 -m http.server` and
-  opens it in a Chrome/Chromium app window (falls back to your default browser);
-- depends on `python3` and recommends a Chromium-based browser.
+On a Chromebook: enable **Settings → Linux development environment**, then open the
+`.deb` from the Files app or run the command above in the Linux terminal. On
+Chromebooks that run Android apps you can install the APK instead.
 
-Launch it from your applications menu or with `swimset`.
+### Android and ChromeOS (Android apps)
 
-You can also use the PWA directly in desktop Chrome: serve the folder on localhost
-or HTTPS, then use Chrome's install icon in the address bar.
+Download `swimset-2.0.0-universal.apk` and open it on the device (allow installing
+from your file manager when prompted), or use adb:
 
-## How send-offs are calculated
-
-```
-target swim time per rep = target pace per 100 × (distance ÷ 100)
-auto send-off            = round_up(target swim time + rest, rounding step)
+```bash
+adb install swimset-2.0.0-universal.apk
 ```
 
-Example: 100 m at 1:40 base pace with 20 s rest → 100 + 20 = 120 s → **2:00**
-send-off. A target pace on a set overrides the practice base pace for that set
-only. Custom send-offs are used exactly as entered; continuous sets have no
-interval, and the runner counts their estimated swim time.
+- Android 6.0+ (`minSdk 23`); the universal APK contains `arm64-v8a`,
+  `armeabi-v7a` and `x86_64` code for phones, tablets and Chromebooks.
+- CI signs the APK with the debug key, so it is meant for sideloading and personal
+  use, not the Play Store. Build locally with your own keystore if you need that.
 
-Course conversions are **training estimates** (`SCY → SCM ×1.11`,
-`SCY → LCM ×1.13`), not official conversions. They ignore pool depth, altitude
-and timing differences.
+### Build it yourself
+
+Requires Flutter 3.24+ with the Android SDK (platform 35, JDK 17) and, for Linux,
+`clang cmake ninja-build pkg-config libgtk-3-dev libgstreamer1.0-dev
+libgstreamer-plugins-base1.0-dev`.
+
+```bash
+make apk         # native/build/app/outputs/flutter-apk/app-release.apk
+make deb         # native/build/deb/swimset_2.0.0_amd64.deb
+make test-native # 24 Flutter unit/widget tests
+```
+
+The supported builder is CI. `.github/workflows/native.yml` runs on every push:
+
+1. install JDK 17, Flutter 3.24.5 and the Linux desktop toolchain;
+2. `flutter pub get` + `flutter analyze` + unit/widget tests;
+3. render the UI screenshots (and fail on any layout overflow);
+4. build the release APK and the Linux bundle;
+5. package the `.deb` and commit logs, screenshots and — when the commit message
+   contains `[ship]` — the APK and `.deb` back to `ci-artifacts/`.
+
+## How the maths works
+
+- **Send-off** = round up to the practice step of `distance ÷ 100 × pace + rest`.
+  A 4×100 free at 1:40 with 20 s rest becomes a 2:00 send-off; 8×50 at 1:40 with
+  20 s rest becomes 1:10.
+- **Continuous sets** (`none`) run for `reps × swim + (reps − 1) × rest`.
+- **Manual send-offs** are used as typed; a set-specific pace overrides the base pace.
+- **Course conversion** uses SCY → SCM ×1.11 and SCM → LCM ×1.13 (approximations,
+  labelled as such in the UI).
 
 ## Data and privacy
 
-- Practices live in this browser's `localStorage`. No network requests are made
-  by the app and there is no analytics.
-- Clearing site data, using private browsing, or switching browsers/devices will
-  lose the library — export JSON backups from the library screen.
-- Browser storage is typically capped around 5 MB, which is thousands of practices.
+- Practices are stored as JSON in the platform’s preferences store
+  (`swimset.v2.practices`, `swimset.v2.draft`, `swimset.v2.theme`); the library
+  screen reports how much space it uses.
+- Export produces a JSON file (`{app, version, exportedAt, practices}`) that the
+  import screen accepts in three shapes: one practice, a list, or that object.
+- There is no server, no account, no analytics and no HTTP client in the app. PDFs
+  and text sheets are generated on the device.
 
-## Development
+## Repository layout
 
 ```
-index.html               app shell
-css/app.css              all styles, dark theme and print sheet
-js/core.js               pure logic: model, pace maths, totals, validation, text export
-js/store.js              localStorage persistence, draft, import/export
-js/templates.js          built-in workouts
-js/app.js                UI, routing, builder, library, pace tools, poolside runner
-sw.js                    offline cache (bump CACHE_VERSION when assets change)
-manifest.webmanifest     PWA metadata
-icons/                   generated PNG/SVG icons
-tests/                   Node tests (core, store) + jsdom UI smoke test
-packaging/linux/         Debian packaging and launcher
-tools/make-icons.py      icon generator (Pillow)
+native/                the native app (Flutter, Dart)
+  lib/main.dart        app entry: store, state, MaterialApp
+  lib/src/models.dart  practice/set models, send-off maths, formatting, validation
+  lib/src/templates.dart  seven built-in practices
+  lib/src/store.dart   local persistence and JSON import/export
+  lib/src/state.dart   AppState (draft, library, theme, tabs)
+  lib/src/export.dart  PDF deck sheets, file save/open, text helpers
+  lib/src/ui/          builder, library, pace, poolside, shell and shared widgets
+  test/                models, store, widget and screenshot tests
+  tool/package_deb.sh  builds the Debian package from the Linux bundle
+  android/, linux/     native runners for the two targets
+.github/workflows/native.yml  CI that builds and publishes both binaries
+index.html, js/, css/  legacy web build, kept as the reference implementation
+tests/                 test suite for the legacy web build
 ```
 
-### Tests
+## Legacy web build
 
-```bash
-npm install          # only needed for the jsdom UI test
-npm test             # core maths, storage, templates
-npm run test:ui      # boots the real app in jsdom and exercises the UI
-```
+The original offline-first PWA is still in the repository (`index.html`, `js/`,
+`css/`, `sw.js`) and remains the readable reference for the practice maths and the
+visual design. It is not what ships: `make serve` runs it, `make test` runs its
+logic tests, and the native app reimplements it in Dart.
 
-The core and store tests have no dependencies; the UI test skips itself if jsdom
-is not installed.
+## Credits and licence
 
-### Icons
-
-```bash
-npm run icons        # requires Pillow: python3 -m pip install Pillow
-```
-
-### Versioning
-
-Update `version` in `package.json`, `CACHE_VERSION` in `sw.js` (when assets
-change) and the version shown in the in-app help before cutting a release.
-
-## Notes and limitations
-
-- The app is a static client-side application; JavaScript is required.
-- Send-offs assume one target pace per set. Per-lane or per-swimmer intervals are
-  not modelled yet — duplicate the practice or use a custom send-off per set.
-- The poolside timer counts down the estimated/send-off time. If auto-advance is
-  off it stops at zero and waits for you.
-- Course conversions are approximate by design.
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+MIT licensed (see `LICENSE`). Bundled typeface: [Lato](https://www.lato-fonts.com/),
+SIL Open Font License. Icons: Material Icons, Apache License 2.0.
