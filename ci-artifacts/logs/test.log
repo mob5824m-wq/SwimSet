@@ -10,18 +10,22 @@
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: totals and steps aggregates volume, reps and duration
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: totals and steps compiles rep-by-rep steps
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: totals and steps validates
+✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: saves, lists and deletes practices
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: serialisation round-trips JSON
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: serialisation clamps bad input
+✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: stores the working draft and theme
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: conversions converts between courses
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: conversions builds a ladder
-✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: templates and text ships seven templates
-✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: templates and text exports readable text
-✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: saves, lists and deletes practices
-✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: stores the working draft and theme
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: exports and imports the library
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: imports a single practice and a bare list
+✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: templates and text ships seven templates
+✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: templates and text exports readable text
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: rejects files without practices
-✅ /home/runner/work/SwimSet/SwimSet/native/test/widget_test.dart: builder, navigation and saving work
-✅ /home/runner/work/SwimSet/SwimSet/native/test/widget_test.dart: saved practice opens from the library
+::group::✅ /home/runner/work/SwimSet/SwimSet/native/test/widget_test.dart: builder, navigation and saving work
+[fonts] MaterialIcons <- /opt/hostedtoolcache/flutter/stable-3.24.5-x64/flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf
+::endgroup::
+::group::✅ /home/runner/work/SwimSet/SwimSet/native/test/widget_test.dart: saved practice opens from the library
+[fonts] MaterialIcons <- /opt/hostedtoolcache/flutter/stable-3.24.5-x64/flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf
+::endgroup::
 
 🎉 24 tests passed.

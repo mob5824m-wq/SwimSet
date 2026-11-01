@@ -1,4 +1,6 @@
 
-✅ render native screens
+::group::✅ render native screens
+[fonts] MaterialIcons <- /opt/hostedtoolcache/flutter/stable-3.24.5-x64/flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf
+::endgroup::
 
 🎉 1 test passed.

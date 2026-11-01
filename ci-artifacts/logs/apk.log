@@ -10,5 +10,5 @@ Installing Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/build-to
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
 Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 8348 bytes (99.5% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
 Caught exception: Already watching path: /home/runner/work/SwimSet/SwimSet/native/android
-Running Gradle task 'assembleRelease'...                          233.8s
+Running Gradle task 'assembleRelease'...                          191.2s
 ✓ Built build/app/outputs/flutter-apk/app-release.apk (55.3MB)
