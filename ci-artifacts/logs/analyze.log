@@ -1,5 +1,6 @@
 Analyzing native...                                             
 
-   info • Use the null-aware operator '?.' rather than an explicit 'null' comparison • lib/src/models.dart:190:10 • prefer_null_aware_operators
+  error • Undefined name 'WakelockPlus' • lib/src/ui/run.dart:66:15 • undefined_identifier
+   info • The import of 'dart:typed_data' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/services.dart' • test/font_loader.dart:2:8 • unnecessary_import
 
-1 issue found. (ran in 16.1s)
+2 issues found. (ran in 13.6s)
