@@ -1,2 +1,6 @@
 Analyzing native...                                             
-No issues found! (ran in 12.6s)
+
+  error • The getter 'distance' isn't defined for the type 'RunStep' • lib/src/ui/run.dart:387:44 • undefined_getter
+  error • The getter 'stroke' isn't defined for the type 'RunStep' • lib/src/ui/run.dart:387:61 • undefined_getter
+
+2 issues found. (ran in 15.8s)
