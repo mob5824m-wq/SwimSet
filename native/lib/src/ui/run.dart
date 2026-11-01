@@ -663,7 +663,10 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
             ),
             if (_multiHeat) ...[
               const SizedBox(height: 8),
-              SizedBox(height: 52, child: _heatStrip(context, scheme)),
+              SizedBox(
+                height: _plans.any((plan) => plan.heat.lanes.isNotEmpty) ? 64 : 52,
+                child: _heatStrip(context, scheme),
+              ),
               const SizedBox(height: 4),
             ],
             const SizedBox(height: 10),
