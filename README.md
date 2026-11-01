@@ -15,6 +15,17 @@ network calls.
 - **Built by CI.** GitHub Actions compiles both binaries and commits them, together
   with the test logs and UI screenshots, back to the branch.
 
+| Builder | Poolside timer | Dark theme |
+| --- | --- | --- |
+| ![Practice builder](docs/screenshots/builder.png) | ![Poolside timer](docs/screenshots/poolside.png) | ![Dark theme](docs/screenshots/builder-dark.png) |
+
+| Pace tools | Library | Phone layout |
+| --- | --- | --- |
+| ![Pace and send-off tools](docs/screenshots/pace.png) | ![Practice library](docs/screenshots/library.png) | ![Phone builder](docs/screenshots/mobile-builder.png) |
+
+Screenshots are rendered from the real Flutter widget tree by the CI screenshot test
+(`make screens`), at desktop and phone sizes.
+
 ## Features
 
 **Practice builder**
