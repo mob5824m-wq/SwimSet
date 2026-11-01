@@ -9,3 +9,12 @@ release/
 
 # Native build outputs pushed back by CI
 ci-artifacts/
+
+# Flutter
+native/.dart_tool/
+native/build/
+native/.flutter-plugins
+native/.flutter-plugins-dependencies
+native/.pub/
+native/.idea/
+native/*.iml

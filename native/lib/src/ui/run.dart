@@ -51,7 +51,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
     super.didUpdateWidget(oldWidget);
     if (widget.state.runToken != _seenToken) {
       _seenToken = widget.state.runToken;
-      _loadSteps();
+      _loadSteps(notify: false);
     }
   }
 
@@ -292,7 +292,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
     final progress = step.durationMs <= 0 ? 0.0 : (_remainingMs / step.durationMs).clamp(0.0, 1.0);
     final timeUp = !_running && _remainingMs <= 0 && !_finished;
     final accent = _running ? scheme.primary : (timeUp ? scheme.error : const Color(0xFFD97706));
-    final ringSize = math.min(MediaQuery.sizeOf(context).width - 110, 310.0);
+    final ringSize = math.min(MediaQuery.sizeOf(context).width - 110, 310.0).toDouble();
 
     final timerCard = Card(
       clipBehavior: Clip.antiAlias,

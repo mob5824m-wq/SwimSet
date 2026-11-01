@@ -78,6 +78,6 @@ void main() {
 
   test('rejects files without practices', () async {
     final store = await PracticeStore.open();
-    expect(() => store.importJson('{"hello":"world"}'), throwsFormatException);
+    await expectLater(store.importJson('{"hello":"world"}'), throwsFormatException);
   });
 }
