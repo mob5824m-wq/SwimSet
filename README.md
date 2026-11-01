@@ -115,6 +115,9 @@ adb install swimset-2.1.0-universal.apk
   `armeabi-v7a` and `x86_64` code for phones, tablets and Chromebooks.
 - CI signs the APK with the debug key, so it is meant for sideloading and personal
   use, not the Play Store. Build locally with your own keystore if you need that.
+- Android 13+ asks once for notification permission; it only controls the ongoing
+  "poolside timer running" notification that keeps the timer alive with the screen
+  off. Deny it and the timer still works while the app is in the foreground.
 
 ### Build it yourself
 
