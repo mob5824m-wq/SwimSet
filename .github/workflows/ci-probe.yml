@@ -1,0 +1,17 @@
+name: CI probe
+on:
+  push:
+    branches: [arena/d2542b1f-swimset]
+  workflow_dispatch:
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain probe
+        run: |
+          java -version
+          gradle --version || true
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME" 2>/dev/null || true
+          echo "probe ok"
