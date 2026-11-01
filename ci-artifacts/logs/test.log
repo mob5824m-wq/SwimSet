@@ -5,22 +5,31 @@
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: send-off maths 100s on 1:40 plus 20s rest rounds to 2:00
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: send-off maths 50s on 1:40 plus 20s rest rounds to 1:10
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: send-off maths rounds up to the practice step
+✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: saves, lists and deletes practices
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: send-off maths manual and continuous intervals
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: send-off maths per-set target pace wins over base pace
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: totals and steps aggregates volume, reps and duration
+✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: stores the working draft and theme
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: totals and steps compiles rep-by-rep steps
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: totals and steps validates
+✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: exports and imports the library
+✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: imports a single practice and a bare list
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: serialisation round-trips JSON
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: serialisation clamps bad input
+✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: rejects files without practices
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: conversions converts between courses
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: conversions builds a ladder
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: templates and text ships seven templates
 ✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: templates and text exports readable text
-✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: saves, lists and deletes practices
-✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: stores the working draft and theme
-✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: exports and imports the library
-✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: imports a single practice and a bare list
-✅ /home/runner/work/SwimSet/SwimSet/native/test/store_test.dart: rejects files without practices
+✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: heats each heat swims off its own pace
+✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: heats totals and steps follow the heat
+✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: heats start offsets stagger the heats
+✅ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: heats heats survive JSON and text export
+::group::❌ /home/runner/work/SwimSet/SwimSet/native/test/models_test.dart: heats sparse heats are normalized (failed)
+type 'Null' is not a subtype of type 'num' in type cast
+package:swimset/src/models.dart 496:20  normalizePractice
+test/models_test.dart 293:24            main.<fn>.<fn>
+::endgroup::
 ::group::✅ /home/runner/work/SwimSet/SwimSet/native/test/widget_test.dart: builder, navigation and saving work
 [fonts] MaterialIcons <- /opt/hostedtoolcache/flutter/stable-3.24.5-x64/flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf
 ::endgroup::
@@ -28,4 +37,4 @@
 [fonts] MaterialIcons <- /opt/hostedtoolcache/flutter/stable-3.24.5-x64/flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf
 ::endgroup::
 
-🎉 24 tests passed.
+::error::28 tests passed, 1 failed.
