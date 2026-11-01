@@ -38,6 +38,9 @@ Screenshots are rendered from the real Flutter widget tree by the CI screenshot 
 - Live totals: volume, estimated session time, reps, sets and volume by stroke.
 - A *practice check* that flags missing warm-ups/cool-downs and send-offs shorter
   than the target swim time.
+- **Heats.** Add up to eight heats with their own names and base paces. Every set
+  shows a send-off per heat, totals show each heat's session time, and the deck
+  sheet prints the heat send-offs under each set.
 
 **Pace tools**
 - Send-off ladder for 25 → 500 at any base pace and rest.
@@ -47,8 +50,12 @@ Screenshots are rendered from the real Flutter widget tree by the CI screenshot 
 **Poolside runner**
 - Rep-by-rep timer with a progress ring, overall progress and elapsed time.
 - Beeps at 3-2-1 and at the end of each send-off, muted with one tap.
-- Auto-advance, previous/next/jump, fullscreen and a screen that stays awake while
-  the timer runs (handled by the Android window flags, not a background service).
+- **Multiple heats on one clock.** Set a start interval and the runner staggers the
+  heats, showing each heat's countdown, a send cue when the next heat goes off the
+  wall, and a tap-to-follow heat strip.
+- Auto-advance, previous/next/jump (single timeline), fullscreen and a screen that
+  stays awake while the timer runs (handled by the Android window flags, not a
+  background service).
 - Big touch targets sized for a phone propped up at the end of a lane.
 
 **Library and sharing**
@@ -63,8 +70,8 @@ Screenshots are rendered from the real Flutter widget tree by the CI screenshot 
 
 ### Debian, and Chromebooks with the Linux container
 
-Download `swimset_2.0.0_amd64.deb` (from `ci-artifacts/` in this repository or the
-`swimset-native` artifact of the workflow run) and install it:
+Download `swimset_2.0.0_amd64.deb` from the [latest release][release] (or from
+`ci-artifacts/` in this repository) and install it:
 
 ```bash
 sudo apt install ./swimset_2.0.0_amd64.deb
@@ -81,8 +88,8 @@ Chromebooks that run Android apps you can install the APK instead.
 
 ### Android and ChromeOS (Android apps)
 
-Download `swimset-2.0.0-universal.apk` and open it on the device (allow installing
-from your file manager when prompted), or use adb:
+Download `swimset-2.0.0-universal.apk` from the [latest release][release] and open
+it on the device (allow installing from your file manager when prompted), or use adb:
 
 ```bash
 adb install swimset-2.0.0-universal.apk
@@ -111,8 +118,14 @@ The supported builder is CI. `.github/workflows/native.yml` runs on every push:
 2. `flutter pub get` + `flutter analyze` + unit/widget tests;
 3. render the UI screenshots (and fail on any layout overflow);
 4. build the release APK and the Linux bundle;
-5. package the `.deb` and commit logs, screenshots and — when the commit message
-   contains `[ship]` — the APK and `.deb` back to `ci-artifacts/`.
+5. package the `.deb`, upload both binaries with the workflow artifact, and — when
+   the commit message contains `[ship]` — refresh the GitHub release and commit the
+   binaries, logs and screenshots to `ci-artifacts/`.
+
+Every run's `swimset-native` artifact contains `swimset-2.0.0-universal.apk` and
+`swimset_2.0.0_amd64.deb`, so no build ever ends without downloadable binaries.
+
+[release]: https://github.com/mob5824m-wq/SwimSet/releases/latest
 
 ## How the maths works
 
@@ -121,6 +134,9 @@ The supported builder is CI. `.github/workflows/native.yml` runs on every push:
   20 s rest becomes 1:10.
 - **Continuous sets** (`none`) run for `reps × swim + (reps − 1) × rest`.
 - **Manual send-offs** are used as typed; a set-specific pace overrides the base pace.
+- **Heats** reuse the same sets but their own base pace, so a 1:50 heat gets
+  longer send-offs than a 1:40 heat. The poolside clock offsets heat *n* by
+  `n × interval`, so heat 2 is sent from the same clock as heat 1.
 - **Course conversion** uses SCY → SCM ×1.11 and SCM → LCM ×1.13 (approximations,
   labelled as such in the UI).
 

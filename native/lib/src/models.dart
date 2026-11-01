@@ -486,15 +486,14 @@ Practice normalizePractice(Map<String, dynamic> raw) {
   final sets = raw['sets'];
   final heats = raw['heats'];
   final heatInterval = raw['heatInterval'];
+  final step = roundTo is num ? roundTo.round() : 5;
   return Practice(
     id: raw['id'] is String && (raw['id'] as String).isNotEmpty ? raw['id'] as String : uid('p'),
     title: title is String && title.trim().isNotEmpty ? title.trim() : 'Untitled practice',
     date: date is String && RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(date) ? date : todayISO(),
     course: Course.fromCode(raw['course']),
     basePace: clampInt(basePace is num ? basePace.round() : 100, 20, 1800),
-    roundTo: roundSteps.contains(roundTo is num ? roundTo.round() : 5)
-        ? (roundTo as num).round()
-        : 5,
+    roundTo: roundSteps.contains(step) ? step : 5,
     group: raw['group'] is String ? raw['group'] as String : '',
     focus: raw['focus'] is String ? raw['focus'] as String : '',
     notes: raw['notes'] is String ? raw['notes'] as String : '',
