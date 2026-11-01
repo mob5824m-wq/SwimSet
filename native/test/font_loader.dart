@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Loads the fonts the app ships with so widget tests and screenshots render
@@ -18,6 +19,7 @@ Future<void> loadAppFonts() async {
 
   final iconFont = _findIconFont();
   if (iconFont != null) {
+    debugPrint('[fonts] MaterialIcons <- ${iconFont.path}');
     final bytes = iconFont.readAsBytesSync();
     final loader = FontLoader('MaterialIcons')
       ..addFont(Future<ByteData>.value(ByteData.view(bytes.buffer)));
@@ -43,6 +45,9 @@ File? _findIconFont() {
     if (parent.path == dir.path) break;
     dir = parent;
   }
+
+  candidates.add('test/assets/MaterialIcons-Regular.otf');
+  candidates.add('test/assets/MaterialIcons-Regular.ttf');
 
   for (final path in candidates) {
     final file = File(path);

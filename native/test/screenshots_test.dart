@@ -3,25 +3,13 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:swimset/main.dart';
 import 'package:swimset/src/state.dart';
 import 'package:swimset/src/store.dart';
 
-Future<void> _loadFonts() async {
-  final loader = FontLoader('Lato');
-  for (final asset in const [
-    'assets/fonts/Lato-Regular.ttf',
-    'assets/fonts/Lato-Italic.ttf',
-    'assets/fonts/Lato-Bold.ttf',
-    'assets/fonts/Lato-BoldItalic.ttf',
-  ]) {
-    loader.addFont(rootBundle.load(asset));
-  }
-  await loader.load();
-}
+import 'font_loader.dart';
 
 Future<void> _capture(WidgetTester tester, GlobalKey key, String name) async {
   final boundary = key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
@@ -37,7 +25,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('render native screens', (tester) async {
-    await _loadFonts();
+    await loadAppFonts();
     SharedPreferences.setMockInitialValues({});
     final store = await PracticeStore.open();
     await store.savePractice(starterPractice());

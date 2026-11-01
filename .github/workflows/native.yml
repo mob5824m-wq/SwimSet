@@ -66,6 +66,13 @@ jobs:
             cp "branding/android/mipmap-$d/ic_launcher.png" "android/app/src/main/res/mipmap-$d/ic_launcher.png"
           done
 
+      - name: Stage the Material icon font for tests
+        run: |
+          FLUTTER_ROOT_DIR="$(dirname "$(dirname "$(command -v flutter)")")"
+          mkdir -p test/assets
+          cp "$FLUTTER_ROOT_DIR/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf" test/assets/
+          ls -l test/assets
+
       - name: Fetch packages and analyze
         run: |
           flutter pub get 2>&1 | tee ../ci-artifacts/logs/pubget.log
