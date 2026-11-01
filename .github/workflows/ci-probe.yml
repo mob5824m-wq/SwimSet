@@ -10,8 +10,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Toolchain probe
         run: |
-          java -version
-          gradle --version || true
+          java -version 2>&1 | head -3
+          gradle --version 2>&1 | head -5 || true
           echo "ANDROID_HOME=$ANDROID_HOME"
           ls "$ANDROID_HOME" 2>/dev/null || true
-          echo "probe ok"
+          mkdir -p probe-out
+          echo "hello from ci" > probe-out/hello.txt
+          java -version > probe-out/java.txt 2>&1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: probe-out
+          path: probe-out
