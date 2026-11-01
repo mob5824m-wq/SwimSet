@@ -1,7 +1,7 @@
 dpkg-deb: building package 'swimset' in '/home/runner/work/SwimSet/SwimSet/native/build/deb/swimset_2.0.0_amd64.deb'.
 Built: /home/runner/work/SwimSet/SwimSet/native/build/deb/swimset_2.0.0_amd64.deb
  new Debian package, version 2.0.
- size 9207282 bytes: control archive=1320 bytes.
+ size 9207344 bytes: control archive=1320 bytes.
      598 bytes,    15 lines      control
     1824 bytes,    23 lines      md5sums
  Package: swimset
