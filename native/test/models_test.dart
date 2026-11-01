@@ -391,4 +391,76 @@ void main() {
       expect(restored.heats[1].startOffset, 150);
     });
   });
+
+  group('lanes and volume balance', () {
+    test('heat lanes survive JSON and the text export', () {
+      final practice = Practice(
+        id: 'pl',
+        title: 'Lanes',
+        heats: [Heat(id: 'h1', name: 'Heat 1', lanes: '3–5')],
+        sets: [PracticeSet(id: 's1')],
+      );
+      final restored = Practice.fromJson(practice.toJson());
+      expect(restored.heats.first.lanes, '3–5');
+      expect(practiceToText(practice), contains('lanes 3–5'));
+      expect(Practice.fromJson({'id': 'px', 'heats': [{'name': 'H', 'lanes': '  1-2  '}]})
+          .heats
+          .first
+          .lanes, '1-2');
+    });
+
+    test('volume split follows the set types', () {
+      final practice = Practice(
+        id: 'pv',
+        sets: [
+          PracticeSet(id: 'w', type: SetType.warmup, reps: 4, distance: 100),
+          PracticeSet(id: 'm', type: SetType.main, reps: 10, distance: 100),
+          PracticeSet(id: 'c', type: SetType.cooldown, reps: 2, distance: 100),
+        ],
+      );
+      final split = volumeSplit(practice);
+      expect(split.total, 1600);
+      expect(split.warmup, 400);
+      expect(split.main, 1000);
+      expect(split.cooldown, 200);
+      expect(split.share(VolumeBucket.main), closeTo(0.625, 0.0001));
+      expect(volumeNudge(practice), isNull);
+
+      final mainOnly = Practice(
+        id: 'pm',
+        sets: [PracticeSet(id: 'm2', type: SetType.main, reps: 20, distance: 100)],
+      );
+      expect(volumeNudge(mainOnly), isNotNull);
+      expect(validatePractice(mainOnly).any((issue) => issue.message.contains('Main work')), isTrue);
+    });
+
+    test('volume targets clamp and default', () {
+      final practice = Practice.fromJson(
+          {'id': 'pt', 'targetWarmup': 300, 'targetMain': -5, 'targetCooldown': 20});
+      expect(practice.targetWarmup, 100);
+      expect(practice.targetMain, 0);
+      expect(practice.targetCooldown, 20);
+      final defaults = Practice(id: 'pd');
+      expect(defaults.targetWarmup, 25);
+      expect(defaults.targetMain, 60);
+      expect(defaults.targetCooldown, 15);
+      expect(Practice.fromJson(defaults.toJson()).targetMain, 60);
+    });
+
+    test('reordering detaches a broken block', () {
+      final practice = Practice(
+        id: 'pb2',
+        sets: [
+          PracticeSet(id: 'a', blockId: 'b', blockRounds: 2),
+          PracticeSet(id: 'b', blockId: 'b', blockRounds: 2),
+          PracticeSet(id: 'c'),
+        ],
+      );
+      expect(expandSets(practice).length, 5);
+      practice.sets.insert(1, practice.sets.removeAt(2));
+      normalizeBlocks(practice);
+      expect(practice.sets.every((set) => set.blockId == null), isTrue);
+      expect(expandSets(practice).length, 3);
+    });
+  });
 }

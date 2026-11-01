@@ -46,15 +46,20 @@ Screenshots are rendered from the real Flutter widget tree by the CI screenshot 
 - Live totals: volume, estimated session time, reps, sets and volume by stroke.
 - A *practice check* that flags missing warm-ups/cool-downs and send-offs shorter
   than the target swim time.
-- **Heats.** Add up to eight heats with their own names and base paces. Every set
-  shows a send-off per heat, totals show each heat's session time, and the deck
-  sheet prints the heat send-offs under each set.
+- **Heats.** Add up to eight heats with their own names, base paces and lane
+  assignments. Every set shows a send-off per heat, totals show each heat's
+  session time, and the deck sheet prints the heat send-offs under each set.
 - **Per-heat send-offs and start times.** Any set can carry a manual send-off for
   one heat without touching the others, and each heat can start at an arbitrary
   offset instead of a fixed stagger.
 - **Set blocks.** Group neighbouring sets and repeat them — a block of two sets
   run three times expands into six rows in the totals, the deck sheet and the
   poolside plan, labelled *Round 2 of 3*.
+- **Drag to reorder**, plus *Copy set* / *Paste set* so a set can move between
+  practices without retyping it.
+- **Volume mix with targets.** A stacked warm-up / main / cool-down bar against
+  the percentages you set per practice, and a nudge when the main work swallows
+  more than 85 % of the session.
 
 **Pace tools**
 - Send-off ladder for 25 → 500 at any base pace and rest.

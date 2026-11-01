@@ -246,18 +246,43 @@ class _BuilderPageState extends State<BuilderPage> {
               ),
             )
           else
-            for (var index = 0; index < draft.sets.length; index++) ...[
-              if (_startsBlock(draft, index)) _blockHeader(context, draft, index),
-              SetEditorCard(
-                key: ValueKey(draft.sets[index].id),
-                state: state,
-                index: index,
-                set: draft.sets[index],
-                unit: draft.course.unit,
-                totalSets: draft.sets.length,
-              ),
-              const SizedBox(height: 10),
-            ],
+            ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              padding: EdgeInsets.zero,
+              itemCount: draft.sets.length,
+              onReorder: _reorder,
+              itemBuilder: (context, index) {
+                final set = draft.sets[index];
+                return Column(
+                  key: ValueKey(set.id),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_startsBlock(draft, index)) _blockHeader(context, draft, index),
+                    SetEditorCard(
+                      state: state,
+                      index: index,
+                      set: set,
+                      unit: draft.course.unit,
+                      totalSets: draft.sets.length,
+                      dragHandle: ReorderableDragStartListener(
+                        index: index,
+                        child: Tooltip(
+                          message: 'Drag to reorder',
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 2),
+                            child: Icon(Icons.drag_indicator,
+                                size: 18, color: SwimTheme.muted(context)),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                );
+              },
+            ),
           Row(
             children: [
               Expanded(
@@ -267,6 +292,22 @@ class _BuilderPageState extends State<BuilderPage> {
                   label: const Text('Add set'),
                 ),
               ),
+              if (state.copiedSet != null) ...[
+                const SizedBox(width: 10),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    if (state.pasteSetAfter(null)) {
+                      ScaffoldMessenger.maybeOf(context)
+                        ?..hideCurrentSnackBar()
+                        ..showSnackBar(const SnackBar(
+                            content: Text('Set pasted at the end.'),
+                            duration: Duration(seconds: 2)));
+                    }
+                  },
+                  icon: const Icon(Icons.content_paste, size: 18),
+                  label: const Text('Paste'),
+                ),
+              ],
               const SizedBox(width: 10),
               OutlinedButton.icon(
                 onPressed: _openTemplates,
@@ -388,6 +429,40 @@ class _BuilderPageState extends State<BuilderPage> {
     );
   }
 
+  Widget _targetField(
+    BuildContext context,
+    String label,
+    int value,
+    void Function(int value) apply,
+  ) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 10.5, color: SwimTheme.muted(context))),
+          const SizedBox(height: 4),
+          TextFormField(
+            key: ValueKey('target-${label.toLowerCase()}'),
+            initialValue: '$value',
+            textAlign: TextAlign.center,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(isDense: true, suffixText: '%'),
+            onChanged: (text) {
+              final parsed = int.tryParse(text.trim());
+              if (parsed == null) return;
+              final next = parsed.clamp(0, 100);
+              if (next == value) return;
+              widget.state.updateDraft((draft) => apply(next));
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _metaCard(BuildContext context, bool compact) {
     final draft = _practice;
     final unit = draft.course.unit;
@@ -494,6 +569,26 @@ class _BuilderPageState extends State<BuilderPage> {
           ),
           const SizedBox(height: 12),
           LabeledField(
+            label: 'Volume targets (%)',
+            trailing: Text(
+              'Warm-up · main · cool-down',
+              style: TextStyle(fontSize: 10.5, color: SwimTheme.muted(context)),
+            ),
+            child: Row(
+              children: [
+                _targetField(context, 'Warm-up', draft.targetWarmup,
+                    (value) => draft.targetWarmup = value),
+                const SizedBox(width: 8),
+                _targetField(context, 'Main', draft.targetMain,
+                    (value) => draft.targetMain = value),
+                const SizedBox(width: 8),
+                _targetField(context, 'Cool-down', draft.targetCooldown,
+                    (value) => draft.targetCooldown = value),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          LabeledField(
             label: 'Practice notes',
             child: TextField(
               controller: _notes,
@@ -534,6 +629,17 @@ class _BuilderPageState extends State<BuilderPage> {
       for (final heat in practice.heats) {
         if (heat.id == heatId) change(heat);
       }
+    });
+  }
+
+  void _reorder(int oldIndex, int newIndex) {
+    if (oldIndex == newIndex) return;
+    widget.state.updateDraft((practice) {
+      if (oldIndex < 0 || oldIndex >= practice.sets.length) return;
+      if (newIndex > oldIndex) newIndex -= 1;
+      final set = practice.sets.removeAt(oldIndex);
+      practice.sets.insert(newIndex.clamp(0, practice.sets.length), set);
+      normalizeBlocks(practice);
     });
   }
 
@@ -773,6 +879,17 @@ class _BuilderPageState extends State<BuilderPage> {
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          LabeledField(
+            label: 'Lanes',
+            child: TextFormField(
+              key: ValueKey('heat-lanes-${heat.id}'),
+              initialValue: heat.lanes,
+              textCapitalization: TextCapitalization.characters,
+              decoration: const InputDecoration(hintText: 'e.g. 3–5, or 1-2 for the fast lane'),
+              onChanged: (value) => _updateHeat(heat.id, (item) => item.lanes = value),
+            ),
+          ),
         ],
       ),
     );
@@ -782,6 +899,7 @@ class _BuilderPageState extends State<BuilderPage> {
     final scheme = Theme.of(context).colorScheme;
     final draft = _practice;
     final strokeEntries = totals.byStroke.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final split = volumeSplit(draft);
     return SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -846,6 +964,59 @@ class _BuilderPageState extends State<BuilderPage> {
                 ),
               ),
             ],
+          ],
+          if (split.total > 0) ...[
+            const SizedBox(height: 14),
+            Text('VOLUME MIX',
+                style: TextStyle(
+                    fontSize: 10,
+                    letterSpacing: 0.9,
+                    fontWeight: FontWeight.w700,
+                    color: SwimTheme.muted(context))),
+            const SizedBox(height: 7),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(5),
+              child: Row(
+                children: [
+                  for (final bucket in VolumeBucket.values)
+                    if (split.volumeFor(bucket) > 0)
+                      Expanded(
+                        flex: split.volumeFor(bucket),
+                        child: Container(height: 9, color: Color(bucket.color)),
+                      ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            for (final bucket in VolumeBucket.values)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 3),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: Color(bucket.color),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(bucket.label,
+                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600)),
+                    ),
+                    Text(
+                      '${(split.share(bucket) * 100).round()}%',
+                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
+                    ),
+                    Text(
+                      ' / ${split.target(draft, bucket)}%',
+                      style: TextStyle(fontSize: 11, color: SwimTheme.muted(context)),
+                    ),
+                  ],
+                ),
+              ),
           ],
           if (draft.heats.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -956,6 +1127,7 @@ class SetEditorCard extends StatefulWidget {
     required this.set,
     required this.unit,
     required this.totalSets,
+    this.dragHandle,
   });
 
   final AppState state;
@@ -963,6 +1135,7 @@ class SetEditorCard extends StatefulWidget {
   final PracticeSet set;
   final String unit;
   final int totalSets;
+  final Widget? dragHandle;
 
   @override
   State<SetEditorCard> createState() => _SetEditorCardState();
@@ -979,6 +1152,12 @@ class _SetEditorCardState extends State<SetEditorCard> {
       final live = practice.sets.firstWhere((item) => item.id == _set.id, orElse: () => _set);
       change(live);
     });
+  }
+
+  void _snack(String message) {
+    ScaffoldMessenger.maybeOf(context)
+      ?..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message), duration: const Duration(seconds: 2)));
   }
 
   void _delete() {
@@ -1083,6 +1262,7 @@ class _SetEditorCardState extends State<SetEditorCard> {
                   children: [
                     Row(
                       children: [
+                        if (widget.dragHandle != null) widget.dragHandle!,
                         TypePill(set.type),
                         const SizedBox(width: 8),
                         Expanded(
@@ -1131,6 +1311,15 @@ class _SetEditorCardState extends State<SetEditorCard> {
                               case 'duplicate':
                                 _duplicate();
                                 break;
+                              case 'copy':
+                                widget.state.copySet(_set);
+                                _snack('Set copied — paste it here or in another practice.');
+                                break;
+                              case 'paste':
+                                if (widget.state.pasteSetAfter(_set)) {
+                                  _snack('Set pasted below.');
+                                }
+                                break;
                               case 'group':
                                 _groupWithNext();
                                 break;
@@ -1156,6 +1345,19 @@ class _SetEditorCardState extends State<SetEditorCard> {
                             const PopupMenuItem(
                               value: 'duplicate',
                               child: Row(children: [Icon(Icons.copy_all_outlined, size: 17), SizedBox(width: 10), Text('Duplicate')]),
+                            ),
+                            const PopupMenuItem(
+                              value: 'copy',
+                              child: Row(children: [Icon(Icons.content_copy, size: 17), SizedBox(width: 10), Text('Copy set')]),
+                            ),
+                            PopupMenuItem(
+                              value: 'paste',
+                              enabled: widget.state.copiedSet != null,
+                              child: const Row(children: [
+                                Icon(Icons.content_paste, size: 17),
+                                SizedBox(width: 10),
+                                Text('Paste set'),
+                              ]),
                             ),
                             PopupMenuItem(
                               value: 'group',

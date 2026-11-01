@@ -581,6 +581,15 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
+                if (plan.heat.lanes.isNotEmpty) ...[
+                  const SizedBox(height: 1),
+                  Text(
+                    'Lanes ${plan.heat.lanes}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 10, color: SwimTheme.muted(context)),
+                  ),
+                ],
               ],
             ),
           ),

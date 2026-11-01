@@ -155,4 +155,38 @@ void main() {
     expect(find.text('2 sets × 3'), findsOneWidget);
     expect(find.textContaining('with rounds'), findsOneWidget);
   });
+
+  testWidgets('sets can be copied, pasted and dragged into a new order', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await loadAppFonts();
+    final store = await PracticeStore.open();
+    final state = AppState.bootstrap(store);
+    await tester.pumpWidget(SwimSetApp(state: state));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Set actions').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Copy set'));
+    await tester.pumpAndSettle();
+    expect(state.copiedSet, isNotNull);
+
+    await tester.tap(find.byTooltip('Set actions').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Paste set'));
+    await tester.pumpAndSettle();
+    expect(state.draft.sets.length, 4);
+    expect(state.draft.sets[1].type, state.draft.sets[0].type);
+    expect(state.draft.sets[1].id, isNot(state.draft.sets[0].id));
+
+    final before = state.draft.sets.map((set) => set.id).toList();
+    await tester.drag(find.byIcon(Icons.drag_indicator).first, const Offset(0, 340));
+    await tester.pumpAndSettle();
+    expect(state.draft.sets.map((set) => set.id).toList(), isNot(equals(before)));
+  });
 }

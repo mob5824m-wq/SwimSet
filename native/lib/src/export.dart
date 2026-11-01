@@ -247,7 +247,8 @@ Future<Uint8List> buildPracticePdf(Practice practice) async {
                     children: [
                       for (final heat in practice.heats)
                         pw.Text(
-                            '${heat.name}: ${formatClock(basePaceForHeat(practice, heat))} / 100 $unit',
+                            '${heat.name}${heat.lanes.isEmpty ? '' : ' (lanes ${heat.lanes})'}: '
+                            '${formatClock(basePaceForHeat(practice, heat))} / 100 $unit',
                             style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey800)),
                       if (practice.heatInterval > 0)
                         pw.Text('starts every ${formatClock(practice.heatInterval)}',

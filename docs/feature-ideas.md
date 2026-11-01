@@ -10,13 +10,13 @@ place: **S** ≈ a day, **M** ≈ a few days, **L** ≈ a week or more.
 
 **1. Set blocks / rounds.** ✅ *Shipped — group neighbouring sets and pick the round count.* Group sets into a block and repeat it ("3 × [4×50 kick + 200 pull]"). Blocks nest inside the practice and get their own volume and time, so 5-round sets stop being copy-paste. `M`
 
-**2. Drag to reorder, move between practices.** Reorder sets by dragging on desktop/tablet, and a clipboard so a set can be copied from one practice to another. `S`
+**2. Drag to reorder, move between practices.** ✅ *Shipped — drag handle on each set, plus copy/paste across practices.* Reorder sets by dragging on desktop/tablet, and a clipboard so a set can be copied from one practice to another. `S`
 
 **3. Drill & set bank.** A searchable library of common drills, kicks and pre-sets (catch-up, 6-kick switch, descend 4×100…) that drops into the draft with sensible strokes and distances. `M`
 
 **4. Parametric templates.** Instead of fixed 2,800 m templates: "Distance Base, target 3,500 m, 50 m pool" and the template scales its reps/distance while keeping the shape. `M`
 
-**5. Volume balance with targets.** A small stacked bar of warm-up / drill / kick / main / cool-down against targets you set per practice, plus a nudge when the main set is 85 % of the session. `S`
+**5. Volume balance with targets.** ✅ *Shipped — stacked volume mix against per-practice percentage targets.* A small stacked bar of warm-up / drill / kick / main / cool-down against targets you set per practice, plus a nudge when the main set is 85 % of the session. `S`
 
 **6. Per-heat manual send-offs.** ✅ *Shipped — each set has a send-off row per heat.* Heats currently get automatic send-offs from their pace. Let a heat override a specific set ("Heat 3 starts this set on 2:15") without changing its base pace. `S`
 
@@ -26,7 +26,7 @@ place: **S** ≈ a day, **M** ≈ a few days, **L** ≈ a week or more.
 
 ## Squad and heats
 
-**9. Lane assignments.** Give each heat lanes ("Heat 2: lanes 3–5, 6 swimmers") and print the assignment on the deck sheet and the poolside strip. `S`
+**9. Lane assignments.** ✅ *Shipped — lanes per heat on the builder, the deck sheet and the poolside strip.* Give each heat lanes ("Heat 2: lanes 3–5, 6 swimmers") and print the assignment on the deck sheet and the poolside strip. `S`
 
 **10. Swimmer roster and attendance.** A local roster, tap-to-attend before the session, and attendance history per practice. `M`
 
@@ -88,8 +88,8 @@ place: **S** ≈ a day, **M** ≈ a few days, **L** ≈ a week or more.
   and its beeps running with the screen off, with pause/resume and next-rep
   buttons on the notification.
 
-The next three worth building: **#2 drag to reorder**, **#9 lane assignments** and
-**#5 volume balance with targets**.
+The next three worth building: **#3 drill & set bank**, **#8 session length
+targets** and **#10 swimmer roster and attendance**.
 
 ## Platform ideas beyond the 30
 

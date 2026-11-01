@@ -41,7 +41,7 @@ void main() {
     };
 
     tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(1440, 2150);
+    tester.view.physicalSize = const Size(1440, 2380);
     addTearDown(() {
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
@@ -81,7 +81,7 @@ void main() {
     await tester.tapAt(const Offset(12, 12));
     await tester.pumpAndSettle();
 
-    tester.view.physicalSize = const Size(390, 1850);
+    tester.view.physicalSize = const Size(390, 2100);
     state.setTab(0);
     await tester.pumpAndSettle();
     await _capture(tester, key, '07-mobile-builder');
@@ -106,7 +106,7 @@ void main() {
     heatsPractice.sets[1].heatSendOffs['h1'] = 135;
     state.replaceDraft(heatsPractice);
 
-    tester.view.physicalSize = const Size(1440, 2650);
+    tester.view.physicalSize = const Size(1440, 3020);
     state.setTab(0);
     await tester.pumpAndSettle();
     await _capture(tester, key, '09-builder-heats');
@@ -123,7 +123,7 @@ void main() {
     await tester.pumpAndSettle();
     await _capture(tester, key, '10-poolside-heats');
 
-    tester.view.physicalSize = const Size(390, 2600);
+    tester.view.physicalSize = const Size(390, 3120);
     state.setTab(0);
     await tester.pumpAndSettle();
     await _capture(tester, key, '11-mobile-heats');

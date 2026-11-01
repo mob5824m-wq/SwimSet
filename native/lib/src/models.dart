@@ -356,6 +356,7 @@ class Heat {
     required this.name,
     this.basePace,
     this.startOffset,
+    this.lanes = '',
   });
 
   String id;
@@ -368,11 +369,15 @@ class Heat {
   /// "index × practice.heatInterval".
   int? startOffset;
 
+  /// Free text lane assignment, e.g. "3–5" or "lanes 1-2".
+  String lanes;
+
   Heat copy({bool freshId = false}) => Heat(
         id: freshId ? uid('h') : id,
         name: name,
         basePace: basePace,
         startOffset: startOffset,
+        lanes: lanes,
       );
 
   Map<String, dynamic> toJson() => {
@@ -380,6 +385,7 @@ class Heat {
         'name': name,
         'basePace': basePace,
         'startOffset': startOffset,
+        'lanes': lanes,
       };
 
   factory Heat.fromJson(Map<String, dynamic> raw) => normalizeHeat(raw, 0);
@@ -389,12 +395,15 @@ Heat normalizeHeat(Map<String, dynamic> raw, int index) {
   final name = raw['name'];
   final pace = raw['basePace'];
   final offset = raw['startOffset'];
+  final lanes = raw['lanes'];
   final clean = name is String ? name.trim() : '';
+  final cleanLanes = lanes is String ? lanes.trim() : '';
   return Heat(
     id: raw['id'] is String && (raw['id'] as String).isNotEmpty ? raw['id'] as String : uid('h'),
     name: clean.isNotEmpty ? clean.substring(0, math.min(40, clean.length)) : 'Heat ${index + 1}',
     basePace: pace is num && pace >= 20 && pace <= 1800 ? pace.round() : null,
     startOffset: offset is num && offset >= 0 && offset <= 7200 ? offset.round() : null,
+    lanes: cleanLanes.length > 24 ? cleanLanes.substring(0, 24) : cleanLanes,
   );
 }
 
@@ -412,6 +421,9 @@ class Practice {
     List<PracticeSet>? sets,
     List<Heat>? heats,
     this.heatInterval = 0,
+    this.targetWarmup = 25,
+    this.targetMain = 60,
+    this.targetCooldown = 15,
     String? createdAt,
     String? updatedAt,
   })  : date = date ?? todayISO(),
@@ -437,6 +449,12 @@ class Practice {
   /// Seconds between consecutive heat send-offs (0 = all heats start together).
   int heatInterval;
 
+  /// Wanted share of the volume per phase, in percent. Shown against the
+  /// practice's actual volume split.
+  int targetWarmup;
+  int targetMain;
+  int targetCooldown;
+
   String createdAt;
   String updatedAt;
 
@@ -453,6 +471,9 @@ class Practice {
         sets: sets.map((set) => set.copy(freshId: freshId)).toList(),
         heats: heats.map((heat) => heat.copy(freshId: freshId)).toList(),
         heatInterval: heatInterval,
+        targetWarmup: targetWarmup,
+        targetMain: targetMain,
+        targetCooldown: targetCooldown,
         createdAt: createdAt,
         updatedAt: updatedAt,
       );
@@ -470,6 +491,9 @@ class Practice {
         'sets': sets.map((set) => set.toJson()).toList(),
         'heats': heats.map((heat) => heat.toJson()).toList(),
         'heatInterval': heatInterval,
+        'targetWarmup': targetWarmup,
+        'targetMain': targetMain,
+        'targetCooldown': targetCooldown,
         'createdAt': createdAt,
         'updatedAt': updatedAt,
       };
@@ -526,6 +550,9 @@ Practice normalizePractice(Map<String, dynamic> raw) {
   final sets = raw['sets'];
   final heats = raw['heats'];
   final heatInterval = raw['heatInterval'];
+  final warmupTarget = raw['targetWarmup'];
+  final mainTarget = raw['targetMain'];
+  final cooldownTarget = raw['targetCooldown'];
   final step = roundTo is num ? roundTo.round() : 5;
   return Practice(
     id: raw['id'] is String && (raw['id'] as String).isNotEmpty ? raw['id'] as String : uid('p'),
@@ -555,6 +582,9 @@ Practice normalizePractice(Map<String, dynamic> raw) {
             .toList()
         : <Heat>[],
     heatInterval: clampInt(heatInterval is num ? heatInterval.round() : 0, 0, 1800),
+    targetWarmup: clampInt(warmupTarget is num ? warmupTarget.round() : 25, 0, 100),
+    targetMain: clampInt(mainTarget is num ? mainTarget.round() : 60, 0, 100),
+    targetCooldown: clampInt(cooldownTarget is num ? cooldownTarget.round() : 15, 0, 100),
     createdAt: raw['createdAt'] is String ? raw['createdAt'] as String : now,
     updatedAt: raw['updatedAt'] is String ? raw['updatedAt'] as String : now,
   );
@@ -667,6 +697,122 @@ List<ExpandedSet> expandSets(Practice practice) {
     }
   }
   return out;
+}
+
+/// The three phases the volume balance is measured against.
+enum VolumeBucket { warmup, main, cooldown }
+
+extension VolumeBucketLabel on VolumeBucket {
+  String get label => switch (this) {
+        VolumeBucket.warmup => 'Warm-up',
+        VolumeBucket.main => 'Main work',
+        VolumeBucket.cooldown => 'Cool-down',
+      };
+
+  int get color => switch (this) {
+        VolumeBucket.warmup => 0xFF0EA5E9,
+        VolumeBucket.main => 0xFFEF4444,
+        VolumeBucket.cooldown => 0xFF64748B,
+      };
+}
+
+VolumeBucket volumeBucketFor(SetType type) => switch (type) {
+      SetType.warmup || SetType.preset => VolumeBucket.warmup,
+      SetType.cooldown => VolumeBucket.cooldown,
+      _ => VolumeBucket.main,
+    };
+
+/// Volume per phase, measured on the expanded practice so blocks count in full.
+class VolumeSplit {
+  VolumeSplit({required this.warmup, required this.main, required this.cooldown});
+
+  final int warmup;
+  final int main;
+  final int cooldown;
+
+  int get total => warmup + main + cooldown;
+
+  int volumeFor(VolumeBucket bucket) => switch (bucket) {
+        VolumeBucket.warmup => warmup,
+        VolumeBucket.main => main,
+        VolumeBucket.cooldown => cooldown,
+      };
+
+  double share(VolumeBucket bucket) => total == 0 ? 0 : volumeFor(bucket) / total;
+
+  int target(Practice practice, VolumeBucket bucket) => switch (bucket) {
+        VolumeBucket.warmup => practice.targetWarmup,
+        VolumeBucket.main => practice.targetMain,
+        VolumeBucket.cooldown => practice.targetCooldown,
+      };
+}
+
+VolumeSplit volumeSplit(Practice practice) {
+  var warmup = 0;
+  var main = 0;
+  var cooldown = 0;
+  for (final entry in expandSets(practice)) {
+    final volume = entry.set.reps * entry.set.distance;
+    switch (volumeBucketFor(entry.set.type)) {
+      case VolumeBucket.warmup:
+        warmup += volume;
+      case VolumeBucket.main:
+        main += volume;
+      case VolumeBucket.cooldown:
+        cooldown += volume;
+    }
+  }
+  return VolumeSplit(warmup: warmup, main: main, cooldown: cooldown);
+}
+
+/// A gentle note when one phase swallows the session.
+String? volumeNudge(Practice practice) {
+  final split = volumeSplit(practice);
+  if (split.total == 0) return null;
+  final share = split.share(VolumeBucket.main);
+  if (share < 0.85) return null;
+  return 'Main work is ${(share * 100).round()}% of the volume — a longer warm-up or a cool-down would round it out.';
+}
+
+/// Keeps blocks contiguous: a block that was split apart by a reorder is
+/// released, so the deck never silently repeats an unexpected set.
+void normalizeBlocks(Practice practice) {
+  final seen = <String>{};
+  String? current;
+  for (final set in practice.sets) {
+    final id = set.blockId;
+    if (id == null) {
+      current = null;
+      continue;
+    }
+    if (id == current) continue;
+    if (seen.contains(id)) {
+      set.blockId = null;
+      set.blockRounds = 1;
+      continue;
+    }
+    seen.add(id);
+    current = id;
+  }
+  // A block that lost all but one member is not a block any more.
+  var index = 0;
+  while (index < practice.sets.length) {
+    final id = practice.sets[index].blockId;
+    if (id == null) {
+      index++;
+      continue;
+    }
+    var end = index;
+    while (end < practice.sets.length && practice.sets[end].blockId == id) {
+      end++;
+    }
+    if (end - index == 1) {
+      practice.sets[index]
+        ..blockId = null
+        ..blockRounds = 1;
+    }
+    index = end;
+  }
 }
 
 class Totals {
@@ -851,6 +997,10 @@ List<PracticeIssue> validatePractice(Practice practice) {
     issues.add(PracticeIssue(
         IssueLevel.error, 'Set a base pace per 100 for automatic send-offs.'));
   }
+  final nudge = volumeNudge(practice);
+  if (nudge != null) {
+    issues.add(PracticeIssue(IssueLevel.info, nudge));
+  }
   if (totals.distance > 8000) {
     issues.add(PracticeIssue(IssueLevel.warn,
         'That is a big session (${formatNumber(totals.distance)} ${practice.course.unit}). Double-check the volume.'));
@@ -888,7 +1038,9 @@ String practiceToText(Practice practice) {
       '${formatNumber(totals.distance)} $unit · ~${formatDuration(totals.seconds)}');
   if (practice.heats.isNotEmpty) {
     final paceList = practice.heats
-        .map((heat) => '${heat.name} ${formatClock(basePaceForHeat(practice, heat))}')
+        .map((heat) => '${heat.name}'
+            '${heat.lanes.isEmpty ? '' : ' (lanes ${heat.lanes})'} '
+            '${formatClock(basePaceForHeat(practice, heat))}')
         .join(' · ');
     final stagger = practice.heatInterval > 0
         ? ' · starts every ${formatClock(practice.heatInterval)}'

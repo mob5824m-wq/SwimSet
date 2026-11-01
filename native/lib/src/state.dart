@@ -63,6 +63,9 @@ class AppState extends ChangeNotifier {
   int tab = 0;
   int runToken = 0;
 
+  /// Set copied with "Copy set"; pasting works across practices.
+  PracticeSet? copiedSet;
+
   Totals get totals => practiceTotals(draft);
   List<PracticeIssue> get issues => validatePractice(draft);
   int get storageBytes => store.storageBytes();
@@ -77,6 +80,27 @@ class AppState extends ChangeNotifier {
     runToken++;
     tab = 3;
     notifyListeners();
+  }
+
+  void copySet(PracticeSet set) {
+    copiedSet = set.copy();
+    notifyListeners();
+  }
+
+  /// Inserts the clipboard set after [after] (or at the end when null).
+  bool pasteSetAfter(PracticeSet? after) {
+    final source = copiedSet;
+    if (source == null) return false;
+    final copy = source.copy(freshId: true)
+      ..blockId = null
+      ..blockRounds = 1;
+    updateDraft((practice) {
+      final index = after == null ? -1 : practice.sets.indexWhere((item) => item.id == after.id);
+      final at = index < 0 ? practice.sets.length : index + 1;
+      practice.sets.insert(at, copy);
+      normalizeBlocks(practice);
+    });
+    return true;
   }
 
   void updateDraft(void Function(Practice practice) change) {
