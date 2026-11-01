@@ -63,7 +63,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _ticker?.cancel();
-    unawaited(WakelockPlus.disable().catchError((Object _) {}));
+    _keepAwake(false);
     final player = _player;
     if (player != null) {
       unawaited(player.dispose().catchError((Object _) {}));
