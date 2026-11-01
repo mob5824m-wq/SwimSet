@@ -384,7 +384,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
     final state = _running ? '$left left' : 'Paused · $left left';
     if (!_multiHeat || _steps.isEmpty) return state;
     final step = _steps[math.min(_index, _steps.length - 1)];
-    return '$state · ${step.reps} × ${step.distance} ${step.stroke.label}';
+    return '$state · ${step.label}';
   }
 
   Future<Object?> _platformCall(MethodCall call) async {
