@@ -113,11 +113,10 @@ void main() {
     await loadAppFonts();
     final store = await PracticeStore.open();
     final state = AppState.bootstrap(store);
+    state.setTab(3);
     await tester.pumpWidget(SwimSetApp(state: state));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Poolside'));
-    await tester.pumpAndSettle();
     await tester.tap(find.text('Start'));
     await tester.pump();
     expect(calls, contains('startTimer'));
