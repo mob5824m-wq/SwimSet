@@ -424,8 +424,8 @@ class _BuilderPageState extends State<BuilderPage> {
                       for (final course in Course.values)
                         DropdownMenuItem(
                           value: course,
-                          child: Text('${course.code} — ${course.poolLabel}'),
-                          style: const TextStyle(fontWeight: FontWeight.w600),
+                          child: Text('${course.code} — ${course.poolLabel}',
+                              style: const TextStyle(fontWeight: FontWeight.w600)),
                         ),
                     ],
                     onChanged: (value) {

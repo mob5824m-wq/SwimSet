@@ -43,18 +43,10 @@ jobs:
             libgtk-3-dev liblzma-dev libblkid-dev libstdc++-12-dev \
             libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libdbus-1-dev
 
-      - name: Scaffold Android and Linux runners
+      - name: Prepare native runners
         run: |
           mkdir -p ../ci-artifacts/logs
           rm -rf ../ci-artifacts/logs/*
-          cp -R lib /tmp/swimset-lib
-          cp -R test /tmp/swimset-tests
-          cp pubspec.yaml /tmp/swimset-pubspec.yaml
-          flutter create --platforms=android,linux --org com.mob5824 --project-name swimset --no-pub . 2>&1 | tee ../ci-artifacts/logs/create.log
-          rm -rf lib test
-          cp -R /tmp/swimset-lib lib
-          cp -R /tmp/swimset-tests test
-          cp /tmp/swimset-pubspec.yaml pubspec.yaml
           WINDOW_CC=linux/my_application.cc
           if [ -f linux/runner/my_application.cc ]; then WINDOW_CC=linux/runner/my_application.cc; fi
           sed -i -E 's/gtk_window_set_title\(window, "[^"]*"\)/gtk_window_set_title(window, "SwimSet")/' "$WINDOW_CC"
@@ -69,7 +61,6 @@ jobs:
           for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
             cp "branding/android/mipmap-$d/ic_launcher.png" "android/app/src/main/res/mipmap-$d/ic_launcher.png"
           done
-          tar czf ../ci-artifacts/platform-scaffold.tar.gz android linux .metadata .gitignore 2>/dev/null || true
 
       - name: Fetch packages and analyze
         run: |
