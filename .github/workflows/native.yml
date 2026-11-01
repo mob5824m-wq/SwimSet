@@ -55,8 +55,12 @@ jobs:
           for f in android/app/build.gradle android/app/build.gradle.kts; do
             if [ -f "$f" ]; then
               sed -i -E 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/; s/minSdk = flutter.minSdkVersion/minSdk = 23/' "$f"
+              sed -i -E 's/compileSdk(Version)? ?=? ?flutter.compileSdkVersion/compileSdk = 35/' "$f"
             fi
           done
+          if ! grep -q suppressUnsupportedCompileSdk android/gradle.properties; then
+            echo "android.suppressUnsupportedCompileSdk=35" >> android/gradle.properties
+          fi
           rm -rf android/app/src/main/res/mipmap-anydpi-v26
           for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
             cp "branding/android/mipmap-$d/ic_launcher.png" "android/app/src/main/res/mipmap-$d/ic_launcher.png"

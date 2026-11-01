@@ -218,6 +218,7 @@ class _LibraryPageState extends State<LibraryPage> {
                       value: _sort,
                       borderRadius: BorderRadius.circular(14),
                       style: TextStyle(
+                        fontFamily: 'Lato',
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
                         color: SwimTheme.muted(context),
@@ -284,7 +285,7 @@ class _LibraryPageState extends State<LibraryPage> {
             }),
           const SizedBox(height: 18),
           Text(
-            'Library uses about ${(widget.state.storageBytes / 1024).ceil()} KB of browser-style storage. '
+            'Library uses about ${(widget.state.storageBytes / 1024).ceil()} KB of app storage. '
             'Export a backup before clearing app data.',
             style: TextStyle(color: SwimTheme.muted(context), fontSize: 11.5),
           ),

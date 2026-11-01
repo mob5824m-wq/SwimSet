@@ -408,7 +408,7 @@ class _BuilderPageState extends State<BuilderPage> {
                     ),
                     style: OutlinedButton.styleFrom(
                       alignment: Alignment.centerLeft,
-                      textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                      textStyle: const TextStyle(fontFamily: 'Lato', fontWeight: FontWeight.w600, fontSize: 14),
                     ),
                   ),
                 ),
@@ -971,6 +971,7 @@ class _SetEditorCardState extends State<SetEditorCard> {
                                   visualDensity: VisualDensity.compact,
                                   textStyle: WidgetStatePropertyAll(
                                     TextStyle(
+                                      fontFamily: 'Lato',
                                       fontSize: 11.5,
                                       fontWeight: FontWeight.w700,
                                       color: scheme.onSurface,

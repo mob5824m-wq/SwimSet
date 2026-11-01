@@ -185,10 +185,7 @@ double? parseTimeSeconds(String? input) {
   return null;
 }
 
-int? parseWholeSeconds(String? input) {
-  final value = parseTimeSeconds(input);
-  return value == null ? null : value.round();
-}
+int? parseWholeSeconds(String? input) => parseTimeSeconds(input)?.round();
 
 /// "0:45", "1:40", "1:02:03".
 String formatClock(num totalSeconds) {

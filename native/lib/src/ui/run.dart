@@ -4,7 +4,6 @@ import 'dart:math' as math;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../models.dart';
 import '../state.dart';
@@ -178,9 +177,14 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
     }
   }
 
+  static const MethodChannel _powerChannel = MethodChannel('swimset/power');
+
+  /// Asks the host platform to hold the screen awake while the timer runs.
+  /// Android implements this in MainActivity; desktops simply ignore it.
   void _keepAwake(bool awake) {
-    unawaited((awake ? WakelockPlus.enable() : WakelockPlus.disable())
-        .catchError((Object _) {}));
+    unawaited(_powerChannel
+        .invokeMethod<bool>('keepAwake', awake)
+        .catchError((Object _) => false));
   }
 
   void _start() {
@@ -291,7 +295,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
     final scheme = Theme.of(context).colorScheme;
     final progress = step.durationMs <= 0 ? 0.0 : (_remainingMs / step.durationMs).clamp(0.0, 1.0);
     final timeUp = !_running && _remainingMs <= 0 && !_finished;
-    final accent = _running ? scheme.primary : (timeUp ? scheme.error : const Color(0xFFD97706));
+    final accent = timeUp ? scheme.error : scheme.primary;
     final ringSize = math.min(MediaQuery.sizeOf(context).width - 110, 310.0).toDouble();
 
     final timerCard = Card(
@@ -447,7 +451,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
                   style: FilledButton.styleFrom(
                     minimumSize: const Size(132, 56),
                     backgroundColor: _running ? const Color(0xFFD97706) : null,
-                    textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                    textStyle: const TextStyle(fontFamily: 'Lato', fontSize: 17, fontWeight: FontWeight.w700),
                   ),
                 ),
                 IconButton.filledTonal(
