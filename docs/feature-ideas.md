@@ -44,7 +44,7 @@ place: **S** ≈ a day, **M** ≈ a few days, **L** ≈ a week or more.
 
 **16. Voice callouts.** Spoken cues on top of the beeps: "Heat 2, 4 × 100 free on 1:55 — go", "last rep", "30 seconds". Uses the platform text-to-speech, fully offline. `M`
 
-**17. Background timer with notification controls.** ✅ *Shipped (Android foreground service); notification play/pause/next is still to come.* On Android, keep the timer and beeps running when the screen is locked or the app is backgrounded, with play/pause/next in the notification. `M`
+**17. Background timer with notification controls.** ✅ *Shipped — Android foreground service with a live countdown plus pause/resume and next-rep buttons.* On Android, keep the timer and beeps running when the screen is locked or the app is backgrounded, with play/pause/next in the notification. `M`
 
 **18. Distinct sounds per event.** Separate, chooseable tones for 3-2-1, the send-off, a heat send and the end of the session; import your own whistle or beep. `S`
 
@@ -85,8 +85,8 @@ place: **S** ≈ a day, **M** ≈ a few days, **L** ≈ a week or more.
 - **#6 per-heat manual send-offs** and **#12 arbitrary heat start offsets** — the
   heats feature is complete without leaving the builder.
 - **#17 background timer** — on Android a foreground service keeps the countdown
-  and its beeps running with the screen off. Play/pause from the notification is
-  the remaining piece.
+  and its beeps running with the screen off, with pause/resume and next-rep
+  buttons on the notification.
 
 The next three worth building: **#2 drag to reorder**, **#9 lane assignments** and
 **#5 volume balance with targets**.

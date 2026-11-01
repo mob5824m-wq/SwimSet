@@ -70,8 +70,9 @@ Screenshots are rendered from the real Flutter widget tree by the CI screenshot 
 - Auto-advance, previous/next/jump (single timeline), fullscreen and a screen that
   stays awake while the timer runs.
 - **Background timing.** On Android the runner holds a foreground service with an
-  ongoing notification, so the countdown and its beeps keep going when the screen
-  locks or you switch apps. Pausing the timer or leaving the screen removes it.
+  ongoing notification that mirrors the countdown, so the timer and its beeps keep
+  going when the screen locks or you switch apps. **Pause/Resume** and **Next rep**
+  sit right on the notification, so you never have to unlock the phone mid-set.
 - Big touch targets sized for a phone propped up at the end of a lane.
 
 **Library and sharing**

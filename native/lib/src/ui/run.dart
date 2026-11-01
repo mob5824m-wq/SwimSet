@@ -37,6 +37,10 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
   final Set<int> _beeps = {};
   late int _seenToken;
 
+  /// Last state pushed to the Android notification, so we only update on change.
+  int _notifiedSecond = -1;
+  bool _notifiedRunning = false;
+
   /// One plan per heat when the practice defines several heats.
   List<_HeatPlan> _plans = const [];
   int _selectedHeat = 0;
@@ -48,6 +52,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _powerChannel.setMethodCallHandler(_platformCall);
     _seenToken = widget.state.runToken;
     _loadSteps(notify: false);
   }
@@ -64,9 +69,10 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _powerChannel.setMethodCallHandler(null);
     _ticker?.cancel();
     _keepAwake(false);
-    _timerService(false);
+    _stopTimerService();
     final player = _player;
     if (player != null) {
       unawaited(player.dispose().catchError((Object _) {}));
@@ -154,11 +160,12 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
           _lastTick = DateTime.now();
           setState(() {});
           _scrollToCurrent();
+          _syncNotification();
           return;
         }
         _ticker?.cancel();
         _keepAwake(false);
-        _timerService(false);
+        _stopTimerService();
         setState(() {
           _remainingMs = 0;
           _elapsedMs = elapsed;
@@ -171,7 +178,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
       remaining = 0;
       _ticker?.cancel();
       _keepAwake(false);
-      _timerService(false);
+      _stopTimerService();
       setState(() {
         _remainingMs = 0;
         _elapsedMs = elapsed;
@@ -185,6 +192,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
       _remainingMs = remaining;
       _elapsedMs = elapsed;
     });
+    _syncNotification();
   }
 
   void _tickHeats(double delta) {
@@ -219,7 +227,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
     if (_plans.every((item) => elapsed >= item.offsetMs + item.durationMs)) {
       _ticker?.cancel();
       _keepAwake(false);
-      _timerService(false);
+      _stopTimerService();
       setState(() {
         _elapsedMs = elapsed;
         _running = false;
@@ -233,6 +241,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
     }
 
     setState(() {});
+    _syncNotification();
   }
 
   /// Where a heat is on its own timeline, given the shared clock.
@@ -326,10 +335,78 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
 
   /// Runs the timer as an Android foreground service so a locked screen or a
   /// background app does not stop the countdown; desktops ignore the call.
-  void _timerService(bool run) {
-    unawaited(_powerChannel
-        .invokeMethod<bool>(run ? 'startTimer' : 'stopTimer')
-        .catchError((Object _) => false));
+  void _startTimerService() {
+    _notifiedSecond = (_remainingMs / 1000).ceil();
+    _notifiedRunning = true;
+    unawaited(_invoke('startTimer', {
+      'title': _timerTitle,
+      'text': _timerText(),
+      'running': true,
+    }));
+  }
+
+  /// Mirrors the countdown into the ongoing notification (and its Pause/Resume label).
+  void _syncNotification({bool force = false}) {
+    final second = (_remainingMs / 1000).ceil();
+    if (!force && second == _notifiedSecond && _running == _notifiedRunning) return;
+    _notifiedSecond = second;
+    _notifiedRunning = _running;
+    unawaited(_invoke('updateTimer', {
+      'title': _timerTitle,
+      'text': _timerText(),
+      'running': _running,
+    }));
+  }
+
+  void _stopTimerService() {
+    _notifiedSecond = -1;
+    unawaited(_invoke('stopTimer'));
+  }
+
+  /// Quietly calls the host; desktops and tests have no timer service.
+  Future<void> _invoke(String method, [Object? arguments]) async {
+    try {
+      await _powerChannel.invokeMethod<void>(method, arguments);
+    } catch (_) {
+      // No native implementation on this platform.
+    }
+  }
+
+  String get _timerTitle {
+    final practice = widget.state.draft;
+    if (!_multiHeat) return practice.title;
+    return '${_plans[_selectedHeat].heat.name} · ${practice.title}';
+  }
+
+  String _timerText() {
+    final left = _remainingMs > 0 ? formatClock((_remainingMs / 1000).ceil()) : '0:00';
+    if (_notStarted) return '$left until the heat goes off';
+    final state = _running ? '$left left' : 'Paused · $left left';
+    if (!_multiHeat || _steps.isEmpty) return state;
+    final step = _steps[math.min(_index, _steps.length - 1)];
+    return '$state · ${step.reps} × ${step.distance} ${step.stroke.label}';
+  }
+
+  Future<Object?> _platformCall(MethodCall call) async {
+    if (call.method != 'timerAction') return null;
+    switch (call.arguments) {
+      case 'pause':
+        if (_running) _pause();
+      case 'resume':
+        if (!_running) _start();
+      case 'next':
+        _skipNext();
+    }
+    return null;
+  }
+
+  /// Moves to the next rep from the notification without losing the clock.
+  void _skipNext() {
+    if (_index >= _steps.length - 1) return;
+    final wasRunning = _running;
+    _jumpTo(_index + 1);
+    if (wasRunning) _start();
+    _syncNotification(force: true);
   }
 
   void _start() {
@@ -340,16 +417,16 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
       _finished = false;
     });
     _keepAwake(true);
-    _timerService(true);
+    _startTimerService();
     _ensureTicker();
   }
 
   void _pause() {
     _ticker?.cancel();
     _keepAwake(false);
-    _timerService(false);
     if (!mounted) return;
     setState(() => _running = false);
+    _syncNotification(force: true);
   }
 
   void _toggle() => _running ? _pause() : _start();
@@ -357,7 +434,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
   void _reset() {
     _ticker?.cancel();
     _keepAwake(false);
-    _timerService(false);
+    _stopTimerService();
     setState(() {
       _elapsedMs = 0;
       _running = false;
@@ -401,6 +478,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
       }
     });
     _scrollToCurrent();
+    _syncNotification(force: true);
   }
 
   Future<void> _showFinished() async {

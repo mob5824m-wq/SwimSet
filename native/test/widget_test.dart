@@ -123,6 +123,10 @@ void main() {
 
     await tester.tap(find.text('Pause'));
     await tester.pump();
+    expect(calls, contains('updateTimer'));
+
+    await tester.tap(find.byTooltip('Reset practice'));
+    await tester.pump();
     expect(calls, contains('stopTimer'));
   });
 
