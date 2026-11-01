@@ -62,15 +62,11 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused && _running) _pause();
-  }
-
-  @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _ticker?.cancel();
     _keepAwake(false);
+    _timerService(false);
     final player = _player;
     if (player != null) {
       unawaited(player.dispose().catchError((Object _) {}));
@@ -91,7 +87,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
           _HeatPlan(
             heat: practice.heats[index],
             steps: compileSteps(practice, heat: practice.heats[index]),
-            offsetMs: heatStartOffset(practice, index) * 1000,
+            offsetMs: heatStartFor(practice, index) * 1000,
             durationMs: heatDurationMs(practice, practice.heats[index]),
           ),
       ];
@@ -162,6 +158,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
         }
         _ticker?.cancel();
         _keepAwake(false);
+        _timerService(false);
         setState(() {
           _remainingMs = 0;
           _elapsedMs = elapsed;
@@ -174,6 +171,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
       remaining = 0;
       _ticker?.cancel();
       _keepAwake(false);
+      _timerService(false);
       setState(() {
         _remainingMs = 0;
         _elapsedMs = elapsed;
@@ -221,6 +219,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
     if (_plans.every((item) => elapsed >= item.offsetMs + item.durationMs)) {
       _ticker?.cancel();
       _keepAwake(false);
+      _timerService(false);
       setState(() {
         _elapsedMs = elapsed;
         _running = false;
@@ -268,13 +267,15 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
   }
 
   String _nextSendLine() {
+    _HeatPlan? next;
     for (final plan in _plans) {
-      if (_elapsedMs < plan.offsetMs) {
-        final seconds = ((plan.offsetMs - _elapsedMs) / 1000).ceil();
-        return 'Next send: ${plan.heat.name} in ${formatClock(seconds)}';
+      if (_elapsedMs < plan.offsetMs && (next == null || plan.offsetMs < next.offsetMs)) {
+        next = plan;
       }
     }
-    return 'All heats are in the water.';
+    if (next == null) return 'All heats are in the water.';
+    final seconds = ((next.offsetMs - _elapsedMs) / 1000).ceil();
+    return 'Next send: ${next.heat.name} in ${formatClock(seconds)}';
   }
 
   void _selectHeat(int index) {
@@ -323,6 +324,14 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
         .catchError((Object _) => false));
   }
 
+  /// Runs the timer as an Android foreground service so a locked screen or a
+  /// background app does not stop the countdown; desktops ignore the call.
+  void _timerService(bool run) {
+    unawaited(_powerChannel
+        .invokeMethod<bool>(run ? 'startTimer' : 'stopTimer')
+        .catchError((Object _) => false));
+  }
+
   void _start() {
     if (_steps.isEmpty) return;
     if (_finished) _reset();
@@ -331,12 +340,14 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
       _finished = false;
     });
     _keepAwake(true);
+    _timerService(true);
     _ensureTicker();
   }
 
   void _pause() {
     _ticker?.cancel();
     _keepAwake(false);
+    _timerService(false);
     if (!mounted) return;
     setState(() => _running = false);
   }
@@ -346,6 +357,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
   void _reset() {
     _ticker?.cancel();
     _keepAwake(false);
+    _timerService(false);
     setState(() {
       _elapsedMs = 0;
       _running = false;
@@ -545,6 +557,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
                       TypePill(step.type),
                       if (plan != null) TinyPill(plan.heat.name),
                       TinyPill('Set ${step.setIndex + 1} of ${practice.sets.length}'),
+                      if (step.rounds > 1) TinyPill('Round ${step.round}/${step.rounds}'),
                       TinyPill('Rep ${step.rep} of ${step.reps}'),
                     ],
                   ),
@@ -846,7 +859,7 @@ class _RunPageState extends State<RunPage> with WidgetsBindingObserver {
                               ),
                               const SizedBox(height: 1),
                               Text(
-                                'Rep ${item.rep} of ${item.reps}',
+                                '${item.rounds > 1 ? 'Round ${item.round}/${item.rounds} · ' : ''}Rep ${item.rep} of ${item.reps}',
                                 style: TextStyle(fontSize: 10.5, color: SwimTheme.muted(context)),
                               ),
                             ],

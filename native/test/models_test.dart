@@ -305,4 +305,90 @@ void main() {
       expect(restored.heatInterval, 0);
     });
   });
+
+  group('blocks and heat overrides', () {
+    Practice build() => Practice(
+          id: 'pb',
+          title: 'Blocks',
+          basePace: 100,
+          roundTo: 5,
+          heats: [Heat(id: 'h1', name: 'Heat 1', basePace: 110)],
+          sets: [
+            PracticeSet(
+              id: 's1',
+              reps: 4,
+              distance: 50,
+              rest: 20,
+              blockId: 'b1',
+              blockRounds: 3,
+            ),
+            PracticeSet(
+              id: 's2',
+              reps: 2,
+              distance: 200,
+              rest: 20,
+              blockId: 'b1',
+              blockRounds: 3,
+            ),
+            PracticeSet(
+              id: 's3',
+              reps: 4,
+              distance: 100,
+              rest: 20,
+              heatSendOffs: {'h1': 135},
+            ),
+          ],
+        );
+
+    test('blocks repeat their sets in order', () {
+      final practice = build();
+      final expanded = expandSets(practice);
+      expect(expanded.length, 7);
+      expect(expanded.first.set.id, 's1');
+      expect(expanded.first.round, 1);
+      expect(expanded[2].set.id, 's1');
+      expect(expanded[2].round, 2);
+      expect(expanded.last.set.id, 's3');
+      expect(expanded.where((entry) => entry.rounds == 3).length, 6);
+    });
+
+    test('blocks expand into steps and totals', () {
+      final practice = build();
+      final steps = compileSteps(practice);
+      expect(steps.length, 3 * (4 + 2) + 4);
+      expect(steps.first.key, 's1:1:0');
+      expect(steps.first.round, 1);
+      expect(steps.first.rounds, 3);
+      expect(practiceTotals(practice).distance, 2200);
+      expect(practiceToText(practice), contains('Round 2/3'));
+    });
+
+    test('per-heat send-off overrides win over the heat pace', () {
+      final practice = build();
+      final set = practice.sets.last;
+      final heat = practice.heats.first;
+      expect(sendOffForSet(set, practice), 120);
+      expect(autoSendOffForSet(set, practice, heat: heat), 130);
+      expect(sendOffForSet(set, practice, heat: heat), 135);
+      final restored = Practice.fromJson(practice.toJson());
+      expect(restored.sets.last.heatSendOffs['h1'], 135);
+      expect(restored.sets.first.blockId, 'b1');
+      expect(restored.sets.first.blockRounds, 3);
+    });
+
+    test('explicit heat offsets win over the interval', () {
+      final practice = Practice(
+        id: 'po',
+        heatInterval: 60,
+        heats: [
+          Heat(id: 'h1', name: 'H1'),
+          Heat(id: 'h2', name: 'H2', startOffset: 150),
+        ],
+      );
+      expect(heatStartFor(practice, 0), 0);
+      expect(heatStartFor(practice, 1), 150);
+      final restored = Practice.fromJson(practice.toJson());
+      expect(restored.heats[1].startOffset, 150);
+    });
+  });
 }

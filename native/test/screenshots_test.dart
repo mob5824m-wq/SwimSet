@@ -99,6 +99,11 @@ void main() {
         Heat(id: 'h3', name: 'Heat 3'),
       ]
       ..heatInterval = 90;
+    heatsPractice.sets[1].blockId = 'b1';
+    heatsPractice.sets[1].blockRounds = 3;
+    heatsPractice.sets[2].blockId = 'b1';
+    heatsPractice.sets[2].blockRounds = 3;
+    heatsPractice.sets[2].heatSendOffs['h1'] = 135;
     state.replaceDraft(heatsPractice);
 
     tester.view.physicalSize = const Size(1440, 2350);
@@ -111,7 +116,7 @@ void main() {
     await tester.pumpAndSettle();
     await _capture(tester, key, '10-poolside-heats');
 
-    tester.view.physicalSize = const Size(390, 1950);
+    tester.view.physicalSize = const Size(390, 2200);
     state.setTab(0);
     await tester.pumpAndSettle();
     await _capture(tester, key, '11-mobile-heats');

@@ -8,7 +8,7 @@ place: **S** ≈ a day, **M** ≈ a few days, **L** ≈ a week or more.
 
 ## Building practices
 
-**1. Set blocks / rounds.** Group sets into a block and repeat it ("3 × [4×50 kick + 200 pull]"). Blocks nest inside the practice and get their own volume and time, so 5-round sets stop being copy-paste. `M`
+**1. Set blocks / rounds.** ✅ *Shipped — group neighbouring sets and pick the round count.* Group sets into a block and repeat it ("3 × [4×50 kick + 200 pull]"). Blocks nest inside the practice and get their own volume and time, so 5-round sets stop being copy-paste. `M`
 
 **2. Drag to reorder, move between practices.** Reorder sets by dragging on desktop/tablet, and a clipboard so a set can be copied from one practice to another. `S`
 
@@ -18,7 +18,7 @@ place: **S** ≈ a day, **M** ≈ a few days, **L** ≈ a week or more.
 
 **5. Volume balance with targets.** A small stacked bar of warm-up / drill / kick / main / cool-down against targets you set per practice, plus a nudge when the main set is 85 % of the session. `S`
 
-**6. Per-heat manual send-offs.** Heats currently get automatic send-offs from their pace. Let a heat override a specific set ("Heat 3 starts this set on 2:15") without changing its base pace. `S`
+**6. Per-heat manual send-offs.** ✅ *Shipped — each set has a send-off row per heat.* Heats currently get automatic send-offs from their pace. Let a heat override a specific set ("Heat 3 starts this set on 2:15") without changing its base pace. `S`
 
 **7. Mixed-course practices.** A session that is half SCM and half LCM (or a 25 yd warm-up and a 50 m main set), with the send-off maths converting per set rather than per practice. `M`
 
@@ -32,7 +32,7 @@ place: **S** ≈ a day, **M** ≈ a few days, **L** ≈ a week or more.
 
 **11. Per-swimmer pace benchmarks.** Store a 100 time or CSS per swimmer; heats can then be built from benchmarks ("fast / middle / base") and send-offs follow the group's pace automatically. `M`
 
-**12. Arbitrary per-heat start offsets.** Today heats stagger by a fixed interval. Allow "Heat 1 at 0:00, Heat 2 at 1:10, Heat 3 at 3:00" for sessions where the send times are not evenly spaced. `S`
+**12. Arbitrary per-heat start offsets.** ✅ *Shipped — every heat has a "Starts at" field.* Today heats stagger by a fixed interval. Allow "Heat 1 at 0:00, Heat 2 at 1:10, Heat 3 at 3:00" for sessions where the send times are not evenly spaced. `S`
 
 **13. Race-day mode.** Start lists per heat, lane and name, with a results entry screen (time, place, DQ) and a results export — the poolside timer becomes a meet sheet. `L`
 
@@ -44,7 +44,7 @@ place: **S** ≈ a day, **M** ≈ a few days, **L** ≈ a week or more.
 
 **16. Voice callouts.** Spoken cues on top of the beeps: "Heat 2, 4 × 100 free on 1:55 — go", "last rep", "30 seconds". Uses the platform text-to-speech, fully offline. `M`
 
-**17. Background timer with notification controls.** On Android, keep the timer and beeps running when the screen is locked or the app is backgrounded, with play/pause/next in the notification. `M`
+**17. Background timer with notification controls.** ✅ *Shipped (Android foreground service); notification play/pause/next is still to come.* On Android, keep the timer and beeps running when the screen is locked or the app is backgrounded, with play/pause/next in the notification. `M`
 
 **18. Distinct sounds per event.** Separate, chooseable tones for 3-2-1, the send-off, a heat send and the end of the session; import your own whistle or beep. `S`
 
@@ -78,13 +78,18 @@ place: **S** ≈ a day, **M** ≈ a few days, **L** ≈ a week or more.
 
 ---
 
-## If you only build three of these
+## Shipped from this list
 
-1. **#1 set blocks** — the biggest gap for real squad practices.
-2. **#6 per-heat manual send-offs** + **#12 arbitrary offsets** — finishes the heats
-   feature you already have, small effort.
-3. **#17 background timer** — the poolside timer is the app's reason to exist on a
-   phone; a locked screen should not stop it.
+- **#1 set blocks** — grouped sets repeat through the totals, deck sheet and
+  poolside plan.
+- **#6 per-heat manual send-offs** and **#12 arbitrary heat start offsets** — the
+  heats feature is complete without leaving the builder.
+- **#17 background timer** — on Android a foreground service keeps the countdown
+  and its beeps running with the screen off. Play/pause from the notification is
+  the remaining piece.
+
+The next three worth building: **#2 drag to reorder**, **#9 lane assignments** and
+**#5 volume balance with targets**.
 
 ## Platform ideas beyond the 30
 

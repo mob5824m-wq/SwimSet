@@ -212,7 +212,7 @@ class _BuilderPageState extends State<BuilderPage> {
           const SizedBox(height: 14),
           _metaCard(context, compact),
           const SizedBox(height: 14),
-          _heatsCard(context, compact),
+          _heatsCard(context),
           const SizedBox(height: 14),
           if (!wide) ...[
             _totalsCard(context, totals, compact),
@@ -222,7 +222,8 @@ class _BuilderPageState extends State<BuilderPage> {
             children: [
               Expanded(child: Text('Sets', style: Theme.of(context).textTheme.titleLarge)),
               Text(
-                '${draft.sets.length} set${draft.sets.length == 1 ? '' : 's'}',
+                '${draft.sets.length} set${draft.sets.length == 1 ? '' : 's'}'
+                '${expandSets(draft).length > draft.sets.length ? ' · ${expandSets(draft).length} with rounds' : ''}',
                 style: TextStyle(color: SwimTheme.muted(context), fontSize: 12.5),
               ),
             ],
@@ -246,6 +247,7 @@ class _BuilderPageState extends State<BuilderPage> {
             )
           else
             for (var index = 0; index < draft.sets.length; index++) ...[
+              if (_startsBlock(draft, index)) _blockHeader(context, draft, index),
               SetEditorCard(
                 key: ValueKey(draft.sets[index].id),
                 state: state,
@@ -535,7 +537,96 @@ class _BuilderPageState extends State<BuilderPage> {
     });
   }
 
-  Widget _heatsCard(BuildContext context, bool compact) {
+  bool _startsBlock(Practice practice, int index) {
+    final blockId = practice.sets[index].blockId;
+    return blockId != null && (index == 0 || practice.sets[index - 1].blockId != blockId);
+  }
+
+  void _changeBlockRounds(PracticeSet set, int delta) {
+    widget.state.updateDraft((practice) {
+      final blockId = set.blockId;
+      if (blockId == null) return;
+      var rounds = set.blockRounds;
+      for (final item in practice.sets) {
+        if (item.blockId == blockId) rounds = item.blockRounds;
+      }
+      final next = (rounds + delta).clamp(1, 20);
+      for (final item in practice.sets) {
+        if (item.blockId == blockId) item.blockRounds = next;
+      }
+    });
+  }
+
+  void _ungroupBlock(PracticeSet set) {
+    widget.state.updateDraft((practice) {
+      final blockId = set.blockId;
+      if (blockId == null) return;
+      for (final item in practice.sets) {
+        if (item.blockId == blockId) {
+          item.blockId = null;
+          item.blockRounds = 1;
+        }
+      }
+    });
+  }
+
+  Widget _blockHeader(BuildContext context, Practice practice, int index) {
+    final scheme = Theme.of(context).colorScheme;
+    final set = practice.sets[index];
+    final rounds = set.blockRounds;
+    var count = 0;
+    for (var i = index; i < practice.sets.length && practice.sets[i].blockId == set.blockId; i++) {
+      count++;
+    }
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.fromLTRB(12, 3, 4, 3),
+      decoration: BoxDecoration(
+        color: scheme.primary.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: scheme.primary.withOpacity(0.25)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.repeat_rounded, size: 15, color: scheme.primary),
+          const SizedBox(width: 6),
+          Text('Block',
+              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: scheme.primary)),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text('$count sets × $rounds',
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 11, color: SwimTheme.muted(context))),
+          ),
+          IconAction(
+            icon: Icons.remove,
+            size: 16,
+            tooltip: 'Fewer rounds',
+            onPressed: rounds > 1 ? () => _changeBlockRounds(set, -1) : null,
+          ),
+          Text('$rounds',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+          IconAction(
+            icon: Icons.add,
+            size: 16,
+            tooltip: 'More rounds',
+            onPressed: rounds < 20 ? () => _changeBlockRounds(set, 1) : null,
+          ),
+          TextButton(
+            onPressed: () => _ungroupBlock(set),
+            style: TextButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              minimumSize: const Size(0, 30),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
+            child: const Text('Ungroup'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _heatsCard(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final practice = _practice;
     final heats = practice.heats;
@@ -584,7 +675,7 @@ class _BuilderPageState extends State<BuilderPage> {
           explain,
           const SizedBox(height: 12),
           for (var index = 0; index < heats.length; index++) ...[
-            _heatRow(context, heats[index], practice, unit, compact),
+            _heatRow(context, heats[index], index, practice, unit),
             const SizedBox(height: 8),
           ],
           Row(
@@ -624,41 +715,63 @@ class _BuilderPageState extends State<BuilderPage> {
     );
   }
 
-  Widget _heatRow(BuildContext context, Heat heat, Practice practice, String unit, bool compact) {
+  Widget _heatRow(BuildContext context, Heat heat, int index, Practice practice, String unit) {
     return Container(
-      padding: EdgeInsets.fromLTRB(10, compact ? 6 : 8, 6, compact ? 6 : 8),
+      padding: const EdgeInsets.fromLTRB(10, 6, 6, 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: SwimTheme.line(context)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
         children: [
-          Expanded(
-            flex: 3,
-            child: TextFormField(
-              key: ValueKey('heat-name-${heat.id}'),
-              initialValue: heat.name,
-              textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(hintText: 'Heat 1', isDense: true),
-              onChanged: (value) => _updateHeat(heat.id, (item) => item.name = value),
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  key: ValueKey('heat-name-${heat.id}'),
+                  initialValue: heat.name,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(hintText: 'Heat 1', isDense: true),
+                  onChanged: (value) => _updateHeat(heat.id, (item) => item.name = value),
+                ),
+              ),
+              IconAction(
+                icon: Icons.delete_outline,
+                tooltip: 'Remove heat',
+                onPressed: () => _removeHeat(heat),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: compact ? 104 : 128,
-            child: TimeField(
-              key: ValueKey('heat-pace-${heat.id}'),
-              seconds: heat.basePace,
-              allowEmpty: true,
-              hint: formatClock(practice.basePace),
-              onChanged: (value) => _updateHeat(heat.id, (item) => item.basePace = value),
-            ),
-          ),
-          IconAction(
-            icon: Icons.delete_outline,
-            tooltip: 'Remove heat',
-            onPressed: () => _removeHeat(heat),
+          const SizedBox(height: 6),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: LabeledField(
+                  label: 'Pace / 100 $unit',
+                  child: TimeField(
+                    key: ValueKey('heat-pace-${heat.id}'),
+                    seconds: heat.basePace,
+                    allowEmpty: true,
+                    hint: formatClock(practice.basePace),
+                    onChanged: (value) => _updateHeat(heat.id, (item) => item.basePace = value),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: LabeledField(
+                  label: 'Starts at',
+                  child: TimeField(
+                    key: ValueKey('heat-start-${heat.id}'),
+                    seconds: heat.startOffset,
+                    allowEmpty: true,
+                    hint: formatClock(heatStartOffset(practice, index)),
+                    onChanged: (value) => _updateHeat(heat.id, (item) => item.startOffset = value),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -910,6 +1023,39 @@ class _SetEditorCardState extends State<SetEditorCard> {
     });
   }
 
+  String _heatHint(Heat heat) {
+    final auto = autoSendOffForSet(_set, widget.state.draft, heat: heat);
+    return auto == null ? 'swim' : formatClock(auto);
+  }
+
+  void _groupWithNext() {
+    widget.state.updateDraft((practice) {
+      final index = practice.sets.indexWhere((item) => item.id == _set.id);
+      if (index < 0 || index >= practice.sets.length - 1) return;
+      final current = practice.sets[index];
+      final next = practice.sets[index + 1];
+      final blockId = current.blockId ?? next.blockId ?? uid('b');
+      final rounds = current.blockId != null ? current.blockRounds : 3;
+      for (final item in [current, next]) {
+        item.blockId = blockId;
+        item.blockRounds = rounds;
+      }
+    });
+  }
+
+  void _ungroup() {
+    widget.state.updateDraft((practice) {
+      final blockId = _set.blockId;
+      if (blockId == null) return;
+      for (final item in practice.sets) {
+        if (item.blockId == blockId) {
+          item.blockId = null;
+          item.blockRounds = 1;
+        }
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -985,6 +1131,12 @@ class _SetEditorCardState extends State<SetEditorCard> {
                               case 'duplicate':
                                 _duplicate();
                                 break;
+                              case 'group':
+                                _groupWithNext();
+                                break;
+                              case 'ungroup':
+                                _ungroup();
+                                break;
                               case 'delete':
                                 _delete();
                                 break;
@@ -1005,6 +1157,24 @@ class _SetEditorCardState extends State<SetEditorCard> {
                               value: 'duplicate',
                               child: Row(children: [Icon(Icons.copy_all_outlined, size: 17), SizedBox(width: 10), Text('Duplicate')]),
                             ),
+                            PopupMenuItem(
+                              value: 'group',
+                              enabled: widget.index < widget.totalSets - 1,
+                              child: const Row(children: [
+                                Icon(Icons.repeat_rounded, size: 17),
+                                SizedBox(width: 10),
+                                Text('Group with next'),
+                              ]),
+                            ),
+                            if (_set.blockId != null)
+                              const PopupMenuItem(
+                                value: 'ungroup',
+                                child: Row(children: [
+                                  Icon(Icons.link_off_rounded, size: 17),
+                                  SizedBox(width: 10),
+                                  Text('Remove from block'),
+                                ]),
+                              ),
                             PopupMenuItem(
                               value: 'delete',
                               child: Row(children: [
@@ -1240,6 +1410,48 @@ class _SetEditorCardState extends State<SetEditorCard> {
                             ),
                           ],
                         ),
+                        if (widget.state.draft.heats.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          FieldLabel('Send-off per heat'),
+                          const SizedBox(height: 6),
+                          for (final heat in widget.state.draft.heats)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      heat.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                          fontSize: 12, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 116,
+                                    child: TimeField(
+                                      key: ValueKey('heat-send-${set.id}-${heat.id}'),
+                                      seconds: set.heatSendOffs[heat.id],
+                                      allowEmpty: true,
+                                      hint: _heatHint(heat),
+                                      onChanged: (value) => _update((item) {
+                                        if (value == null) {
+                                          item.heatSendOffs.remove(heat.id);
+                                        } else {
+                                          item.heatSendOffs[heat.id] = value;
+                                        }
+                                      }),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          Text(
+                            'Blank uses the heat pace.',
+                            style: TextStyle(fontSize: 10.5, color: SwimTheme.muted(context)),
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         FieldLabel('Equipment'),
                         Wrap(

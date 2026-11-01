@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:swimset/main.dart';
@@ -89,5 +90,66 @@ void main() {
     await tester.pumpAndSettle();
     expect(state.draft.title, 'Saved practice');
     expect(find.text('Save'), findsOneWidget);
+  });
+
+  testWidgets('poolside timer asks the platform for a background service', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final calls = <String>[];
+    const channel = MethodChannel('swimset/power');
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call.method);
+      return true;
+    });
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, null),
+    );
+
+    await loadAppFonts();
+    final store = await PracticeStore.open();
+    final state = AppState.bootstrap(store);
+    await tester.pumpWidget(SwimSetApp(state: state));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Poolside'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start'));
+    await tester.pump();
+    expect(calls, contains('startTimer'));
+
+    await tester.tap(find.text('Pause'));
+    await tester.pump();
+    expect(calls, contains('stopTimer'));
+  });
+
+  testWidgets('a block shows its rounds in the builder', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await loadAppFonts();
+    final store = await PracticeStore.open();
+    final state = AppState.bootstrap(store);
+    final practice = starterPractice();
+    practice.sets[0].blockId = 'b1';
+    practice.sets[0].blockRounds = 3;
+    practice.sets[1].blockId = 'b1';
+    practice.sets[1].blockRounds = 3;
+    state.replaceDraft(practice);
+
+    await tester.pumpWidget(SwimSetApp(state: state));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Block'), findsOneWidget);
+    expect(find.text('2 sets × 3'), findsOneWidget);
+    expect(find.textContaining('with rounds'), findsOneWidget);
   });
 }

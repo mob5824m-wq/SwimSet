@@ -103,8 +103,10 @@ Future<Uint8List> buildPracticePdf(Practice practice) async {
     ),
   ];
 
-  for (var i = 0; i < practice.sets.length; i++) {
-    final set = practice.sets[i];
+  final expandedSets = expandSets(practice);
+  for (var i = 0; i < expandedSets.length; i++) {
+    final entry = expandedSets[i];
+    final set = entry.set;
     final sendOff = sendOffForSet(set, practice);
     final notes = [
       if (set.notes.isNotEmpty) set.notes,
@@ -131,6 +133,12 @@ Future<Uint8List> buildPracticePdf(Practice practice) async {
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
+              if (entry.rounds > 1)
+                pw.Text(
+                  'Round ${entry.round} of ${entry.rounds}',
+                  style: pw.TextStyle(
+                      fontSize: 7, color: PdfColors.grey600, fontWeight: pw.FontWeight.bold),
+                ),
               pw.Text(
                 '${set.reps} × ${set.distance} $unit ${set.stroke.label}',
                 style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),

@@ -2,7 +2,7 @@
 # Builds a self-contained .deb from the Flutter Linux release bundle.
 set -euo pipefail
 
-VERSION="${1:-2.0.0}"
+VERSION="${1:-2.1.0}"
 ARCH="${2:-amd64}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUNDLE="$ROOT/build/linux/x64/release/bundle"

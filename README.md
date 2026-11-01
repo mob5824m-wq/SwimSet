@@ -45,6 +45,12 @@ Screenshots are rendered from the real Flutter widget tree by the CI screenshot 
 - **Heats.** Add up to eight heats with their own names and base paces. Every set
   shows a send-off per heat, totals show each heat's session time, and the deck
   sheet prints the heat send-offs under each set.
+- **Per-heat send-offs and start times.** Any set can carry a manual send-off for
+  one heat without touching the others, and each heat can start at an arbitrary
+  offset instead of a fixed stagger.
+- **Set blocks.** Group neighbouring sets and repeat them — a block of two sets
+  run three times expands into six rows in the totals, the deck sheet and the
+  poolside plan, labelled *Round 2 of 3*.
 
 **Pace tools**
 - Send-off ladder for 25 → 500 at any base pace and rest.
@@ -58,8 +64,10 @@ Screenshots are rendered from the real Flutter widget tree by the CI screenshot 
   heats, showing each heat's countdown, a send cue when the next heat goes off the
   wall, and a tap-to-follow heat strip.
 - Auto-advance, previous/next/jump (single timeline), fullscreen and a screen that
-  stays awake while the timer runs (handled by the Android window flags, not a
-  background service).
+  stays awake while the timer runs.
+- **Background timing.** On Android the runner holds a foreground service with an
+  ongoing notification, so the countdown and its beeps keep going when the screen
+  locks or you switch apps. Pausing the timer or leaving the screen removes it.
 - Big touch targets sized for a phone propped up at the end of a lane.
 
 **Library and sharing**
@@ -74,11 +82,11 @@ Screenshots are rendered from the real Flutter widget tree by the CI screenshot 
 
 ### Debian, and Chromebooks with the Linux container
 
-Download `swimset_2.0.0_amd64.deb` from the [latest release][release] (or from
+Download `swimset_2.1.0_amd64.deb` from the [latest release][release] (or from
 `ci-artifacts/` in this repository) and install it:
 
 ```bash
-sudo apt install ./swimset_2.0.0_amd64.deb
+sudo apt install ./swimset_2.1.0_amd64.deb
 ```
 
 Then launch **SwimSet** from the applications menu, or run `swimset`. The package
@@ -92,11 +100,11 @@ Chromebooks that run Android apps you can install the APK instead.
 
 ### Android and ChromeOS (Android apps)
 
-Download `swimset-2.0.0-universal.apk` from the [latest release][release] and open
+Download `swimset-2.1.0-universal.apk` from the [latest release][release] and open
 it on the device (allow installing from your file manager when prompted), or use adb:
 
 ```bash
-adb install swimset-2.0.0-universal.apk
+adb install swimset-2.1.0-universal.apk
 ```
 
 - Android 6.0+ (`minSdk 23`); the universal APK contains `arm64-v8a`,
@@ -112,7 +120,7 @@ libgstreamer-plugins-base1.0-dev`.
 
 ```bash
 make apk         # native/build/app/outputs/flutter-apk/app-release.apk
-make deb         # native/build/deb/swimset_2.0.0_amd64.deb
+make deb         # native/build/deb/swimset_2.1.0_amd64.deb
 make test-native # 24 Flutter unit/widget tests
 ```
 
@@ -126,8 +134,8 @@ The supported builder is CI. `.github/workflows/native.yml` runs on every push:
    the commit message contains `[ship]` — refresh the GitHub release and commit the
    binaries, logs and screenshots to `ci-artifacts/`.
 
-Every run's `swimset-native` artifact contains `swimset-2.0.0-universal.apk` and
-`swimset_2.0.0_amd64.deb`, so no build ever ends without downloadable binaries.
+Every run's `swimset-native` artifact contains `swimset-2.1.0-universal.apk` and
+`swimset_2.1.0_amd64.deb`, so no build ever ends without downloadable binaries.
 
 [release]: https://github.com/mob5824m-wq/SwimSet/releases/latest
 
@@ -182,10 +190,11 @@ logic tests, and the native app reimplements it in Dart.
 
 ## Roadmap
 
-Thirty ideas for where SwimSet goes next — set blocks, lane assignments, a split
-timer, voice callouts, background timing, roster and attendance, race-day sheets,
-and notes on APK signing and the download warnings — live in
-[docs/feature-ideas.md](docs/feature-ideas.md).
+Ideas for where SwimSet goes next — lane assignments, a split timer, voice
+callouts, roster and attendance, race-day sheets, and notes on APK signing and the
+download warnings — live in [docs/feature-ideas.md](docs/feature-ideas.md).
+Set blocks, per-heat send-offs/start offsets and background timing shipped in
+this release.
 
 ## Credits and licence
 
