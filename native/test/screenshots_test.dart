@@ -94,9 +94,9 @@ void main() {
     final heatsPractice = starterPractice()
       ..title = 'Heat practice'
       ..heats = [
-        Heat(id: 'h1', name: 'Heat 1', basePace: 95),
-        Heat(id: 'h2', name: 'Heat 2', basePace: 110),
-        Heat(id: 'h3', name: 'Heat 3'),
+        Heat(id: 'h1', name: 'Heat 1', basePace: 95, lanes: '3–5'),
+        Heat(id: 'h2', name: 'Heat 2', basePace: 110, lanes: '6–8'),
+        Heat(id: 'h3', name: 'Heat 3', lanes: '1–2'),
       ]
       ..heatInterval = 90;
     heatsPractice.sets[1].blockId = 'b1';
