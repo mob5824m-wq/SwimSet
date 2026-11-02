@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="SwimSet">
+  <rect width="512" height="512" fill="#062a3a"/>
+  <g transform="translate(51.2 51.2) scale(0.8)">
+    <circle cx="430" cy="86" r="150" fill="#0b3b4f"/>
+    <path d="M72 302c50-64 98-64 148 0s98 64 148 0 62-52 72-46" fill="none" stroke="#0ea5e9" stroke-width="34" stroke-linecap="round"/>
+    <path d="M72 394c50-64 98-64 148 0s98 64 148 0 62-52 72-46" fill="none" stroke="#38bdf8" stroke-width="26" stroke-linecap="round" opacity="0.72"/>
+    <circle cx="170" cy="150" r="36" fill="#f8fafc"/>
+    <path d="M212 212l86-44 72 28" fill="none" stroke="#f8fafc" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
